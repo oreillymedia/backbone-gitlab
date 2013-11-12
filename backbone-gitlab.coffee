@@ -6,6 +6,7 @@ window.GitLab = (host, token) ->
     host: host
     token: token
 
+
   {
     User: @Model.extend()
     Users: @Collection.extend()

@@ -16,7 +16,7 @@ sudo npm install -g canned
 Then run this command from the root folder:
 
 ```bash
-canned -p 5000 ./test/canned
+foreman start
 ```
 
 You're now ready to open the test suite located in `test/index.html` in your browser.
