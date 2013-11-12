@@ -1,4 +1,6 @@
-ajaxTimeout = 2000
+ajaxTimeout = 3000
+token = "abcdefg"
+url = "http://127.0.0.1:5000"
 
 describe("GitLab", ->
 
@@ -24,8 +26,8 @@ describe("GitLab", ->
   describe("GitLab.Users", ->
 
     beforeEach(->
-      GitLab.token = "abcdefg"
-      GitLab.url = "locahost:5000"
+      GitLab.token = token
+      GitLab.url = url
     )
 
     it("should fetch users", ->

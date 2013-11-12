@@ -1,4 +1,3 @@
-
 # Variables
 # --------------------------------------------------------
 
@@ -29,7 +28,8 @@ GitLab.User = GitLab.Model.extend()
 
 GitLab.Users = GitLab.Collection.extend(
   model: GitLab.User
-  url: GitLab.url + "/users"
+  url: ->
+    GitLab.url + "/users"
 )
 
 

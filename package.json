@@ -2,7 +2,7 @@
   "name" : "backbone-gitlab", 
   "version" : "0.0.1", 
   "dependencies" : {
-    "canned" : "0.2.0",
+    "canned" : "oreillymedia/canned",
     "foreman" : "0.0.25",
     "express" : "3.4.4"
   }

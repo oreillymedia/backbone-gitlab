@@ -33,7 +33,9 @@
 
   GitLab.Users = GitLab.Collection.extend({
     model: GitLab.User,
-    url: GitLab.url + "/users"
+    url: function() {
+      return GitLab.url + "/users";
+    }
   });
 
 }).call(this);
