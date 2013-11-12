@@ -7,10 +7,10 @@ Backbone for the GitLab API
 Testing
 -------
 
-The library ships with a testing suite that makes requests to a fake [canned](https://github.com/sideshowcoder/canned) server. First you need to install the server globally:
+The library ships with a testing suite that makes requests to a fake [canned](https://github.com/sideshowcoder/canned) server. First you need to install the dependencies:
 
 ```bash
-sudo npm install -g canned
+npm install
 ```
 
 Then run this command from the root folder:
@@ -19,4 +19,4 @@ Then run this command from the root folder:
 foreman start
 ```
 
-You're now ready to open the test suite located in `test/index.html` in your browser.
+You now have a test server running on `localhost:1337`.
