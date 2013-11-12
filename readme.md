@@ -10,7 +10,7 @@ Testing
 The library ships with a testing suite that makes requests to a fake [canned](https://github.com/sideshowcoder/canned) server. First you need to install the server globally:
 
 ```bash
-npm install -g canned
+sudo npm install -g canned
 ```
 
 Then run this command from the root folder:
