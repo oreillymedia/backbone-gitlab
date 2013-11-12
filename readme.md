@@ -1,4 +1,4 @@
-Backbone Models and Collections for the GitLab API
+Backbone for the GitLab API
 ==================================================
 
 `backbone-gitlab` is an open-source JavaScript library built on Backbone.js, to be used in browsers to load data via the GitLab API.
