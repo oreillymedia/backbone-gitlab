@@ -4,10 +4,6 @@
 
   GitLab.url = null;
 
-  GitLab.token = null;
-
-  GitLab.version = "v3";
-
   GitLab.sync = function(method, model, options) {
     var extendedOptions;
     extendedOptions = void 0;
@@ -29,13 +25,17 @@
     sync: GitLab.sync
   });
 
-  GitLab.User = GitLab.Model.extend();
-
-  GitLab.Users = GitLab.Collection.extend({
-    model: GitLab.User,
+  GitLab.User = GitLab.Model.extend({
+    backboneClass: "User",
     url: function() {
-      return GitLab.url + "/users";
+      return "" + GitLab.url + "/user";
     }
   });
+
+  GitLab.Client = function(token) {
+    this.token = token;
+    this.user = new GitLab.User();
+    return this;
+  };
 
 }).call(this);

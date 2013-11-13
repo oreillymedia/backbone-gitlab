@@ -1,10 +1,8 @@
-# Variables
+# GitLab
 # --------------------------------------------------------
 
 window.GitLab = {}
 GitLab.url = null
-GitLab.token = null
-GitLab.version = "v3"
 
 # Extend Backbone.Sync
 # --------------------------------------------------------
@@ -20,34 +18,34 @@ GitLab.sync = (method, model, options) ->
 GitLab.Model = Backbone.Model.extend(sync: GitLab.sync)
 GitLab.Collection = Backbone.Collection.extend(sync: GitLab.sync)
 
-
 # Users
 # --------------------------------------------------------
 
-GitLab.User = GitLab.Model.extend()
-
-GitLab.Users = GitLab.Collection.extend(
-  model: GitLab.User
-  url: ->
-    GitLab.url + "/users"
+GitLab.User = GitLab.Model.extend(
+  backboneClass: "User"
+  url: -> "#{GitLab.url}/user"
 )
 
+#GitLab.Users = GitLab.Collection.extend(
+#  model: GitLab.User
+#  url: ->
+#    GitLab.url + "/users"
+#)
 
+# Client
+# --------------------------------------------------------
 
+GitLab.Client = (token) ->
+  
+  @token    = token
 
+  @user = new GitLab.User()
 
-#window.GitLab = (host, token) ->
-#  @Model = Backbone.Model.extend()
-#  @Collection = Backbone.Collection.extend()
-#
-#  settings =
-#    host: host
-#    token: token
-#
-#
-#  {
-#    User: @Model.extend()
-#    Users: @Collection.extend()
-#    Project: @Model.extend()
-#    Projects: @Collection.extend()
-#  }#
+  return @
+    
+  #{
+  #  User: @Model.extend()
+  #  Users: @Collection.extend()
+  #  Project: @Model.extend()
+  #  Projects: @Collection.extend()
+  #}
