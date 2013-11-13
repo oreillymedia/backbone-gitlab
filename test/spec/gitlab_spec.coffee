@@ -84,13 +84,8 @@ describe("GitLab", ->
 
   describe("gitlab.project", ->
 
-    project = null
-
-    beforeEach(-> 
-      project = gitlab.project("runemadsen/book")
-    )
-
     it("should return empty project model", ->
+      project = gitlab.project("runemadsen/book")
       expect(project.get("path")).toEqual("book")
       expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
       expect(project.id).toBe(undefined)
@@ -98,6 +93,7 @@ describe("GitLab", ->
     )
 
     it("should fetch the project", ->
+      project = gitlab.project("runemadsen/book")
       project.fetch()
       waitsFor(-> 
         return project.id
@@ -108,10 +104,41 @@ describe("GitLab", ->
       )
     )
 
+    # gitlab.project.branches
+    # ---------------------------------------------------------
+
+    describe("gitlab.project.branches", ->
+
+      project = null
+
+      beforeEach(-> 
+        # using another repo name to bypass limitations of canned
+        # if we create a folder with runemadsen name, it doesn't fetch any.get.json
+        project = gitlab.project("owner/project") 
+      )
+
+      it("should instantiate an empty GitLab.Branches collection on GitLab.Project#initialize", ->
+        expect(project.branches.backboneClass).toEqual("Branches")
+        expect(project.branches.length).toBe(0)
+      )
+
+      it("should fill collection on fetch", ->
+        expect(project.branches.url()).toEqual(url + "/projects/owner%2Fproject/repository/branches")
+        project.branches.fetch()
+        waitsFor(-> 
+          return project.branches.length > 0
+        , "ssh keys never loaded", ajaxTimeout
+        )
+        runs(->
+          expect(project.branches.length).toBe(2)
+          expect(project.branches.first().backboneClass).toEqual("Branch")
+          expect(project.branches.first().get("name")).toEqual("master")
+        )
+      )
+
+    )
   )
 )
-
-# project.fetch()                         # => (loaded)
  
 # an empty GitLab.Branches collection is created on GitLab.Project#initialize
 # project.branches              # => (empty)

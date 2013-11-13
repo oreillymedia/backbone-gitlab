@@ -47,8 +47,25 @@ GitLab.SSHKeys = GitLab.Collection.extend(
 GitLab.Project = GitLab.Model.extend(
   backboneClass: "Project"
   url: -> "#{GitLab.url}/projects/#{@id || @escaped_path()}"
+  initialize: ->
+    @branches = new GitLab.Branches([], project:@)
   escaped_path: ->
     return @get("path_with_namespace").replace("/", "%2F")
+)
+
+# Branches
+# --------------------------------------------------------
+
+GitLab.Branch = GitLab.Model.extend(
+  backboneClass: "Branch"
+)
+
+GitLab.Branches = GitLab.Collection.extend(
+  backboneClass: "Branches"
+  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/branches"
+  initialize: (models, options) ->
+    @project = options.project
+  model: GitLab.Branch
 )
 
 # Client

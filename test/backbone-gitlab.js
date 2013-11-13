@@ -52,9 +52,29 @@
     url: function() {
       return "" + GitLab.url + "/projects/" + (this.id || this.escaped_path());
     },
+    initialize: function() {
+      return this.branches = new GitLab.Branches([], {
+        project: this
+      });
+    },
     escaped_path: function() {
       return this.get("path_with_namespace").replace("/", "%2F");
     }
+  });
+
+  GitLab.Branch = GitLab.Model.extend({
+    backboneClass: "Branch"
+  });
+
+  GitLab.Branches = GitLab.Collection.extend({
+    backboneClass: "Branches",
+    url: function() {
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches";
+    },
+    initialize: function(models, options) {
+      return this.project = options.project;
+    },
+    model: GitLab.Branch
   });
 
   GitLab.Client = function(token) {
