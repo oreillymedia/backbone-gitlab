@@ -140,10 +140,6 @@ describe("GitLab", ->
   )
 )
  
-# an empty GitLab.Branches collection is created on GitLab.Project#initialize
-# project.branches              # => (empty)
-# project.branches.fetch()      # => (loaded)
- 
 # an empty GitLab.Members collection is created on GitLab.Project#initialize
 # project.members                 # => (empty)
 # project.members.fetch           # => (loaded)
