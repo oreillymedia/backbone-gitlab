@@ -65,47 +65,52 @@ describe("GitLab", ->
         )
       )
 
-# user.key.create(data)   # CRUD methods available on the collection
-
+      it("should create a new ssh key", ->
+        user.sshkeys.create(key:"Something")
+        waitsFor(-> 
+          return user.sshkeys.length > 0 && user.sshkeys.first().get("title")
+        , "ssh keys never created", ajaxTimeout
+        )
+        runs(->
+          expect(user.sshkeys.length).toBe(1)
+          expect(user.sshkeys.first().get("title")).toEqual("Public key")
+        )
+      )
     )
   )
 
-#
-  #  it("INDEX should fetch users", ->
-  #    users = new GitLab.Users()
-  #    users.fetch()
-  #    
-  #    waitsFor(-> 
-  #      return users.length > 0
-  #    , "Users never loaded", ajaxTimeout
-  #    )
-#
-  #    runs(->
-  #      expect(users.length).toEqual(3)
-  #      expect(users.first().get("username")).toEqual("runemadsen")
-  #      expect(users.last().get("username")).toEqual("zachschwartz")
-  #    )
-  #  )
-#
-  #  it("POST should create user and assign correct url", ->
-  #    users = new GitLab.Users()
-  #    user = users.create(username:"runemadsen")
-#
-  #    waitsFor(-> 
-  #      return user.id == 1
-  #    , "User was never created", ajaxTimeout
-  #    )
-#
-  #    runs(->
-  #      expect(user.url()).toEqual(url + "/users/1")
-  #    )
-  #  )
-  #)
+  # gitlab.project
+  # ----------------------------------------------------------------
+
+  describe("gitlab.project", ->
+
+    project = null
+
+    beforeEach(-> 
+      project = gitlab.project("runemadsen/book")
+    )
+
+    it("should return empty project model", ->
+      expect(project.get("path")).toEqual("book")
+      expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
+      expect(project.id).toBe(undefined)
+      expect(project.url()).toEqual(url + "/projects/runemadsen%2Fbook")
+    )
+
+    it("should fetch the project", ->
+      project.fetch()
+      waitsFor(-> 
+        return project.id
+      , "project never loaded", ajaxTimeout
+      )
+      runs(->
+        expect(project.get("name")).toBe("Book")
+      )
+    )
+
+  )
 )
 
- 
-# you can get a GitLab.Project model by using the project() function
-# project = gitlab.project("myproject")   # => (empty)
 # project.fetch()                         # => (loaded)
  
 # an empty GitLab.Branches collection is created on GitLab.Project#initialize

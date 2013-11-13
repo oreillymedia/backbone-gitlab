@@ -47,9 +47,25 @@
     model: GitLab.SSHKey
   });
 
+  GitLab.Project = GitLab.Model.extend({
+    backboneClass: "Project",
+    url: function() {
+      return "" + GitLab.url + "/projects/" + (this.id || this.escaped_path());
+    },
+    escaped_path: function() {
+      return this.get("path_with_namespace").replace("/", "%2F");
+    }
+  });
+
   GitLab.Client = function(token) {
     this.token = token;
     this.user = new GitLab.User();
+    this.project = function(full_path) {
+      return new GitLab.Project({
+        path: full_path.split("/")[1],
+        path_with_namespace: full_path
+      });
+    };
     return this;
   };
 

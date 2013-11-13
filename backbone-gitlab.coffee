@@ -41,13 +41,28 @@ GitLab.SSHKeys = GitLab.Collection.extend(
   model: GitLab.SSHKey
 )
 
+# Projects
+# --------------------------------------------------------
+
+GitLab.Project = GitLab.Model.extend(
+  backboneClass: "Project"
+  url: -> "#{GitLab.url}/projects/#{@id || @escaped_path()}"
+  escaped_path: ->
+    return @get("path_with_namespace").replace("/", "%2F")
+)
+
 # Client
 # --------------------------------------------------------
 
 GitLab.Client = (token) ->
   
-  @token    = token
+  @token  = token
+  @user   = new GitLab.User()
 
-  @user = new GitLab.User()
+  @project = (full_path) ->
+    return new GitLab.Project(
+      path: full_path.split("/")[1]
+      path_with_namespace: full_path
+    )
 
   return @
