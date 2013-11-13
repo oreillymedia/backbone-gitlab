@@ -24,13 +24,22 @@ GitLab.Collection = Backbone.Collection.extend(sync: GitLab.sync)
 GitLab.User = GitLab.Model.extend(
   backboneClass: "User"
   url: -> "#{GitLab.url}/user"
+  initialize: ->
+    @sshkeys = new GitLab.SSHKeys()
 )
 
-#GitLab.Users = GitLab.Collection.extend(
-#  model: GitLab.User
-#  url: ->
-#    GitLab.url + "/users"
-#)
+# SSH Keys
+# --------------------------------------------------------
+
+GitLab.SSHKey = GitLab.Model.extend(
+  backboneClass: "SSHKey"
+)
+
+GitLab.SSHKeys = GitLab.Collection.extend(
+  backboneClass: "SSHKeys"
+  url: -> "#{GitLab.url}/user/keys"
+  model: GitLab.SSHKey
+)
 
 # Client
 # --------------------------------------------------------
@@ -42,10 +51,3 @@ GitLab.Client = (token) ->
   @user = new GitLab.User()
 
   return @
-    
-  #{
-  #  User: @Model.extend()
-  #  Users: @Collection.extend()
-  #  Project: @Model.extend()
-  #  Projects: @Collection.extend()
-  #}

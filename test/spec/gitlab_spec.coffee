@@ -5,10 +5,12 @@ url = "http://127.0.0.1:5000"
 describe("GitLab", ->
 
   gitlab = null
+  user = null
 
   beforeEach(->
     GitLab.url = url
     gitlab = new GitLab.Client(token)
+    user = gitlab.user
   )
 
   # GitLab
@@ -18,33 +20,56 @@ describe("GitLab", ->
     expect(gitlab.token).toBe(token)
   )
 
-  # GitLab.User
+  # gitlab.user
   # ----------------------------------------------------------------
 
   describe("gitlab.user", ->
-    user = null
-
-    beforeEach(->
-      user = gitlab.user
-    )
-
+    
     it("should return empty model", ->
       expect(gitlab.user.backboneClass).toEqual("User")
     )
 
     it("should fill empty model on fetch", ->
-      expect(user.url()).toEqual(url + "/user");
+      expect(user.url()).toEqual(url + "/user")
       user.fetch()
       waitsFor(-> 
         return user.id == 1
       , "user never loaded", ajaxTimeout
       )
       runs(->
-        expect(user.get("username")).toEqual("runemadsen");
+        expect(user.get("username")).toEqual("runemadsen")
       )
     )
 
+    # gitlab.user.keys
+    # ---------------------------------------------------------
+
+    describe("gitlab.user.keys", ->
+
+      it("should instantiate an empty GitLab.Keys collection on GitLab.User#initialize", ->
+        expect(user.sshkeys.backboneClass).toEqual("SSHKeys")
+        expect(user.sshkeys.length).toBe(0)
+      )
+
+      it("should fill collection on fetch", ->
+        expect(user.sshkeys.url()).toEqual(url + "/user/keys")
+        user.sshkeys.fetch()
+        waitsFor(-> 
+          return user.sshkeys.length > 0
+        , "ssh keys never loaded", ajaxTimeout
+        )
+        runs(->
+          expect(user.sshkeys.length).toBe(2)
+          expect(user.sshkeys.first().backboneClass).toEqual("SSHKey")
+          expect(user.sshkeys.first().get("title")).toEqual("Public key")
+        )
+      )
+
+# user.key.create(data)   # CRUD methods available on the collection
+
+    )
   )
+
 #
   #  it("INDEX should fetch users", ->
   #    users = new GitLab.Users()
@@ -56,7 +81,7 @@ describe("GitLab", ->
   #    )
 #
   #    runs(->
-  #      expect(users.length).toEqual(3);
+  #      expect(users.length).toEqual(3)
   #      expect(users.first().get("username")).toEqual("runemadsen")
   #      expect(users.last().get("username")).toEqual("zachschwartz")
   #    )
@@ -72,21 +97,12 @@ describe("GitLab", ->
   #    )
 #
   #    runs(->
-  #      expect(user.url()).toEqual(url + "/users/1");
+  #      expect(user.url()).toEqual(url + "/users/1")
   #    )
   #  )
   #)
 )
- 
-# an empty GitLab.User model is created on GitLab#initialize
-# gitlab.user             # => (empty)
-# gitlab.user.fetch()     # => (loaded)
-# user = gitlab.user
- 
-# an empty GitLab.Keys collection is created on GitLab.User#initialize
-# user.keys               # => (empty)
-# user.keys.fetch()       # => (loaded)
-# user.key.create(data)   # CRUD methods available on the collection
+
  
 # you can get a GitLab.Project model by using the project() function
 # project = gitlab.project("myproject")   # => (empty)

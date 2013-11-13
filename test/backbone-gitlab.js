@@ -29,7 +29,22 @@
     backboneClass: "User",
     url: function() {
       return "" + GitLab.url + "/user";
+    },
+    initialize: function() {
+      return this.sshkeys = new GitLab.SSHKeys();
     }
+  });
+
+  GitLab.SSHKey = GitLab.Model.extend({
+    backboneClass: "SSHKey"
+  });
+
+  GitLab.SSHKeys = GitLab.Collection.extend({
+    backboneClass: "SSHKeys",
+    url: function() {
+      return "" + GitLab.url + "/user/keys";
+    },
+    model: GitLab.SSHKey
   });
 
   GitLab.Client = function(token) {
