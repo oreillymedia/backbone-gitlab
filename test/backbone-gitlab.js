@@ -53,7 +53,10 @@
       return "" + GitLab.url + "/projects/" + (this.id || this.escaped_path());
     },
     initialize: function() {
-      return this.branches = new GitLab.Branches([], {
+      this.branches = new GitLab.Branches([], {
+        project: this
+      });
+      return this.members = new GitLab.Members([], {
         project: this
       });
     },
@@ -75,6 +78,21 @@
       return this.project = options.project;
     },
     model: GitLab.Branch
+  });
+
+  GitLab.Member = GitLab.Model.extend({
+    backboneClass: "Member"
+  });
+
+  GitLab.Members = GitLab.Collection.extend({
+    backboneClass: "Members",
+    url: function() {
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/members";
+    },
+    initialize: function(models, options) {
+      return this.project = options.project;
+    },
+    model: GitLab.Member
   });
 
   GitLab.Client = function(token) {

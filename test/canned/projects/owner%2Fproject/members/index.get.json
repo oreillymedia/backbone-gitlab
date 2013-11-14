@@ -1,0 +1,27 @@
+[
+  {
+    "id": 1,
+    "username": "runemadsen",
+    "email": "rune@runemadsen.com",
+    "name": "Rune Madsen",
+    "state": "active",
+    "created_at": "2012-04-23T08:00:58Z",
+    "access_level": 40
+  },
+  {
+    "id": 2,
+    "username": "steveklise",
+    "email": "sklise@oreilly.com",
+    "name": "Steve Klise",
+    "state": "blocked",
+    "created_at": "2012-05-23T08:01:01Z"
+  },
+  {
+    "id": 3,
+    "username": "zachschwartz",
+    "email": "zschwartz@oreilly.com",
+    "name": "Zach Schwartz",
+    "state": "blocked",
+    "created_at": "2012-06-23T08:01:01Z"
+  }
+]

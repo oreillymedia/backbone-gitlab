@@ -49,6 +49,7 @@ GitLab.Project = GitLab.Model.extend(
   url: -> "#{GitLab.url}/projects/#{@id || @escaped_path()}"
   initialize: ->
     @branches = new GitLab.Branches([], project:@)
+    @members = new GitLab.Members([], project:@)
   escaped_path: ->
     return @get("path_with_namespace").replace("/", "%2F")
 )
@@ -66,6 +67,21 @@ GitLab.Branches = GitLab.Collection.extend(
   initialize: (models, options) ->
     @project = options.project
   model: GitLab.Branch
+)
+
+# Members
+# --------------------------------------------------------
+
+GitLab.Member = GitLab.Model.extend(
+  backboneClass: "Member"
+)
+
+GitLab.Members = GitLab.Collection.extend(
+  backboneClass: "Members"
+  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/members"
+  initialize: (models, options) ->
+    @project = options.project
+  model: GitLab.Member
 )
 
 # Client

@@ -84,8 +84,14 @@ describe("GitLab", ->
 
   describe("gitlab.project", ->
 
+    project = null
+
+    beforeEach(-> 
+      project = gitlab.project("owner/project") 
+    )
+
     it("should return empty project model", ->
-      project = gitlab.project("runemadsen/book")
+      project = gitlab.project("runemadsen/book") # override project to bypass canned folder thing
       expect(project.get("path")).toEqual("book")
       expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
       expect(project.id).toBe(undefined)
@@ -93,7 +99,7 @@ describe("GitLab", ->
     )
 
     it("should fetch the project", ->
-      project = gitlab.project("runemadsen/book")
+      project = gitlab.project("runemadsen/book") # override project to bypass canned folder thing
       project.fetch()
       waitsFor(-> 
         return project.id
@@ -108,14 +114,6 @@ describe("GitLab", ->
     # ---------------------------------------------------------
 
     describe("gitlab.project.branches", ->
-
-      project = null
-
-      beforeEach(-> 
-        # using another repo name to bypass limitations of canned
-        # if we create a folder with runemadsen name, it doesn't fetch any.get.json
-        project = gitlab.project("owner/project") 
-      )
 
       it("should instantiate an empty GitLab.Branches collection on GitLab.Project#initialize", ->
         expect(project.branches.backboneClass).toEqual("Branches")
@@ -133,6 +131,32 @@ describe("GitLab", ->
           expect(project.branches.length).toBe(2)
           expect(project.branches.first().backboneClass).toEqual("Branch")
           expect(project.branches.first().get("name")).toEqual("master")
+        )
+      )
+
+    )
+
+    # gitlab.project.members
+    # ---------------------------------------------------------
+
+    describe("gitlab.project.members", ->
+
+      it("should instantiate an empty GitLab.Members collection on GitLab.Project#initialize", ->
+        expect(project.members.backboneClass).toEqual("Members")
+        expect(project.members.length).toBe(0)
+      )
+
+      it("should fill collection on fetch", ->
+        expect(project.members.url()).toEqual(url + "/projects/owner%2Fproject/members")
+        project.members.fetch()
+        waitsFor(-> 
+          return project.members.length > 0
+        , "members never loaded", ajaxTimeout
+        )
+        runs(->
+          expect(project.members.length).toBe(3)
+          expect(project.members.first().backboneClass).toEqual("Member")
+          expect(project.members.first().get("name")).toEqual("Rune Madsen")
         )
       )
 
