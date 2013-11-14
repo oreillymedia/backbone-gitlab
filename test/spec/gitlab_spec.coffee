@@ -160,6 +160,18 @@ describe("GitLab", ->
         )
       )
 
+      it("should create a new member", ->
+        project.members.create(name:"Rune Madsen")
+        waitsFor(-> 
+          return project.members.length > 0 && project.members.first().id
+        , "member never created", ajaxTimeout
+        )
+        runs(->
+          expect(project.members.length).toBe(1)
+          expect(project.members.first().get("username")).toEqual("runemadsen")
+        )
+      )
+
     )
   )
 )
