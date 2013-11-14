@@ -20,6 +20,25 @@ describe("GitLab", ->
     expect(gitlab.token).toBe(token)
   )
 
+  # GitLab.Tree
+  # ----------------------------------------------------------------
+
+  describe("GitLab.Tree", ->
+    it("should parse listing into array of tree and blobs", ->
+      expect(true).toBe(false)
+    )
+  )
+
+  # GitLab.Blob
+  # ----------------------------------------------------------------
+
+  describe("GitLab.Blob", ->
+    it("should call correct url", ->
+      # FILL WITH DATA FROM TREE AND MAKE SURE THE FETCH, SAVE, DESTROY METHODS CALL CORRECT URL
+      expect(true).toBe(false)
+    )
+  )
+
   # gitlab.user
   # ----------------------------------------------------------------
 
@@ -171,27 +190,39 @@ describe("GitLab", ->
           expect(project.members.first().get("username")).toEqual("runemadsen")
         )
       )
+    )
 
+    # gitlab.project.contents
+    # ---------------------------------------------------------
+
+    describe("gitlab.project.tree", ->
+
+      it("should return empty tree model", ->
+        tree = project.tree()
+        expect(tree.backboneClass).toEqual("Tree")
+        expect(tree.id).toBe(undefined)
+        expect(tree.url()).toEqual(url + "/projects/runemadsen%2Fbook")
+      )
+
+      it("should add path parameter", ->
+        tree = project.tree("subfolder")
+        expect(tree.backboneClass).toEqual("Tree")
+        expect(tree.id).toBe(undefined)
+        expect(tree.url()).toEqual(url + "/projects/runemadsen%2Fbook?path=subfolder")
+      )
+  
+      it("should fetch the tree", ->
+        tree.fetch()
+        waitsFor(-> 
+          return tree.length > 0
+        , "tree never loaded", ajaxTimeout
+        )
+        runs(->
+          # MAKE SURE THE TREES ARE EMPTY TREE COLLECTIONS (WHERE DOES THE INFO GO?)
+          # MAKE SURE THE FOLDERS ARE FOLDER MODELS
+          expect(tree.length).toBe(99999)
+        )
+      )
     )
   )
 )
- 
-# an empty GitLab.Members collection is created on GitLab.Project#initialize
-# project.members                 # => (empty)
-# project.members.fetch           # => (loaded)
-# project.members.create(data)    # CRUD methods available on the collection
- 
-# you can get a GitLab.File model OR a GitLab.Folder collection by using the contents() function
-# project.contents(path, success, error)
- 
-# this shows how you can interact with the files and folders
-# project.contents("/", (data) ->
-#   console.log data           # => GitLab.Folder collection
-#   console.log data.first()   # => GitLab.File model (empty)
-#   file = data.first()
-#   file.fetch()                  # (loaded)
-#   file.get("content")           # returns content
-#   file.set("content", "Rune")   # sets content
-#   file.save()                   # updates content
-#   file.destroy()                # delete file
-# )
