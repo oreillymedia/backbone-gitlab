@@ -23,21 +23,41 @@ describe("GitLab", ->
   # GitLab.Tree
   # ----------------------------------------------------------------
 
-  describe("GitLab.Tree", ->
-    it("should parse listing into array of tree and blobs", ->
-      expect(true).toBe(false)
-    )
-  )
+  # describe("GitLab.Tree", ->
+  #   it("should parse listing into array of tree and blobs", ->
+  #     tree = new GitLab.Tree([
+  #       {
+  #         "name": "assets",
+  #         "type": "tree",
+  #         "mode": "040000",
+  #         "id": "6229c43a7e16fcc7e95f923f8ddadb8281d9c6c6"
+  #       }, 
+  #       {
+  #         "name": "Rakefile",
+  #         "type": "blob",
+  #         "mode": "100644",
+  #         "id": "35b2f05cbb4566b71b34554cf184a9d0bd9d46d6"
+  #       }
+  #     ])
+  #     expect(tree.first().backboneClass).toEqual("Tree")
+  #     expect(tree.first().path).toEqual("assets")
+  #     expect(tree.first().sha).toEqual("6229c43a7e16fcc7e95f923f8ddadb8281d9c6c6")
+  #     expect(tree.first().length).toBe(0)
+  #     expect(tree.first().url()).toBe(url + "/projects/runemadsen%2Fbook?path=assets")  # 
+  #     expect(tree.last().backboneClass).toEqual("Blob")
+  #     expect(tree.last().get("name")).toEqual("Rakefile")
+  #   )
+  # )
 
   # GitLab.Blob
   # ----------------------------------------------------------------
 
-  describe("GitLab.Blob", ->
-    it("should call correct url", ->
-      # FILL WITH DATA FROM TREE AND MAKE SURE THE FETCH, SAVE, DESTROY METHODS CALL CORRECT URL
-      expect(true).toBe(false)
-    )
-  )
+  #describe("GitLab.Blob", ->
+  #  it("should call correct url", ->
+  #    # FILL WITH DATA FROM TREE AND MAKE SURE THE FETCH, SAVE, DESTROY METHODS CALL CORRECT URL
+  #    expect(true).toBe(false)
+  #  )
+  #)
 
   # gitlab.user
   # ----------------------------------------------------------------
@@ -106,7 +126,7 @@ describe("GitLab", ->
     project = null
 
     beforeEach(-> 
-      project = gitlab.project("owner/project") 
+      project = gitlab.project("owner/project")
     )
 
     it("should return empty project model", ->
@@ -201,28 +221,53 @@ describe("GitLab", ->
         tree = project.tree()
         expect(tree.backboneClass).toEqual("Tree")
         expect(tree.id).toBe(undefined)
-        expect(tree.url()).toEqual(url + "/projects/runemadsen%2Fbook")
+        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree")
       )
 
-      it("should add path parameter", ->
+      it("should return empty subfolder tree", ->
         tree = project.tree("subfolder")
         expect(tree.backboneClass).toEqual("Tree")
         expect(tree.id).toBe(undefined)
-        expect(tree.url()).toEqual(url + "/projects/runemadsen%2Fbook?path=subfolder")
+        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=subfolder")
       )
   
-      it("should fetch the tree", ->
+      it("should fetch the tree and parse trees/blobs", ->
+        tree = project.tree()
         tree.fetch()
-        waitsFor(-> 
+        waitsFor(->
           return tree.length > 0
         , "tree never loaded", ajaxTimeout
         )
         runs(->
-          # MAKE SURE THE TREES ARE EMPTY TREE COLLECTIONS (WHERE DOES THE INFO GO?)
-          # MAKE SURE THE FOLDERS ARE FOLDER MODELS
-          expect(tree.length).toBe(99999)
+          # put blobs in models array
+          expect(tree.length).toBe(1)
+          blob = tree.first()
+          expect(blob.backboneClass).toEqual("Blob")
+          expect(blob.get("name")).toEqual("README.md")
+          expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=README.md") 
+          
+          # put trees in trees array
+          expect(tree.trees.length).toBe(1)
+          subfolder = tree.trees[0]
+          expect(subfolder.backboneClass).toEqual("Tree")
+          expect(subfolder.path).toEqual("assets")
+          expect(subfolder.sha).toEqual("6229c43a7e16fcc7e95f923f8ddadb8281d9c6c6")
+          expect(subfolder.length).toBe(0)
+          expect(subfolder.url()).toBe(url + "/projects/owner%2Fproject/repository/tree?path=assets") 
         )
       )
+
+      # YOU CAN FETCH MODEL FROM THE MODEL YOU GOT FROM TREE!!!
+
+      # fetch for a tree model only updates the "content" and doesn't erase the other data
+
+      # IT SHOULD FETACH ANOTHER BRANCH BOTH TREE AND BLOB. IT SHOULD KEEP THE BRANCH WHEN GETTING BLOBS FROM TREES!
+
+      # project.blob get blob directly without loading a tree
+
+      # tree fetch should work on subsubfolders. Does name have full path?
+
+      # make sure the save, update, destroy stuff works
     )
   )
 )

@@ -50,6 +50,11 @@ GitLab.Project = GitLab.Model.extend(
   initialize: ->
     @branches = new GitLab.Branches([], project:@)
     @members = new GitLab.Members([], project:@)
+  tree: (path) ->
+    return new GitLab.Tree([], 
+      project:@
+      path: path
+    )
   escaped_path: ->
     return @get("path_with_namespace").replace("/", "%2F")
 )
@@ -82,6 +87,52 @@ GitLab.Members = GitLab.Collection.extend(
   initialize: (models, options) ->
     @project = options.project
   model: GitLab.Member
+)
+
+# Git Data
+# --------------------------------------------------------
+
+GitLab.Blob = GitLab.Model.extend(
+  backboneClass: "Blob"
+  initialize: (data, options) ->
+    @project = options.project
+  url: -> 
+    "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/blobs/#{@branch || "master"}?filepath=#{@get("name")}"
+)
+
+GitLab.Tree = GitLab.Collection.extend(
+  backboneClass: "Tree"
+  model: GitLab.Blob
+  url: -> 
+    call = "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree"
+    call += "?path=#{@path}" if @path
+    call
+  initialize: (models, options) ->
+    @project = options.project
+    @path = options.path
+    @sha = options.sha
+    @trees = []
+  parse: (resp, xhr) ->
+    
+    # add trees to trees
+    _(resp).filter((obj) =>
+      obj.type == "tree"
+    ).map((obj) =>
+      @trees.push(new GitLab.Tree([],
+        project: @project
+        path: obj.name
+        sha: obj.id
+      ))
+    )
+
+    # add blobs to models
+    _(resp).filter((obj) =>
+      obj.type == "blob"
+    ).map((obj) =>
+      new GitLab.Blob(obj,
+        project: @project
+      )
+    )
 )
 
 # Client

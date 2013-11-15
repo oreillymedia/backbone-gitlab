@@ -60,6 +60,12 @@
         project: this
       });
     },
+    tree: function(path) {
+      return new GitLab.Tree([], {
+        project: this,
+        path: path
+      });
+    },
     escaped_path: function() {
       return this.get("path_with_namespace").replace("/", "%2F");
     }
@@ -93,6 +99,54 @@
       return this.project = options.project;
     },
     model: GitLab.Member
+  });
+
+  GitLab.Blob = GitLab.Model.extend({
+    backboneClass: "Blob",
+    initialize: function(data, options) {
+      return this.project = options.project;
+    },
+    url: function() {
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/blobs/" + (this.branch || "master") + "?filepath=" + (this.get("name"));
+    }
+  });
+
+  GitLab.Tree = GitLab.Collection.extend({
+    backboneClass: "Tree",
+    model: GitLab.Blob,
+    url: function() {
+      var call;
+      call = "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree";
+      if (this.path) {
+        call += "?path=" + this.path;
+      }
+      return call;
+    },
+    initialize: function(models, options) {
+      this.project = options.project;
+      this.path = options.path;
+      this.sha = options.sha;
+      return this.trees = [];
+    },
+    parse: function(resp, xhr) {
+      var _this = this;
+      _(resp).filter(function(obj) {
+        return obj.type === "tree";
+      }).map(function(obj) {
+        return _this.trees.push(new GitLab.Tree([], {
+          project: _this.project,
+          path: obj.name,
+          sha: obj.id
+        }));
+      });
+      return _(resp).filter(function(obj) {
+        return obj.type === "blob";
+      }).map(function(obj) {
+        return new GitLab.Blob(obj, {
+          project: _this.project
+        });
+      });
+    }
   });
 
   GitLab.Client = function(token) {
