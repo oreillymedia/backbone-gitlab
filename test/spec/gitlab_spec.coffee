@@ -218,21 +218,21 @@ describe("GitLab", ->
     describe("gitlab.project.tree", ->
 
       it("should return empty tree model", ->
-        tree = project.tree()
+        tree = project.tree("/")
         expect(tree.backboneClass).toEqual("Tree")
         expect(tree.id).toBe(undefined)
-        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree")
+        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=%2F&ref_name=master")
       )
 
       it("should return empty subfolder tree", ->
         tree = project.tree("subfolder")
         expect(tree.backboneClass).toEqual("Tree")
         expect(tree.id).toBe(undefined)
-        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=subfolder")
+        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=subfolder&ref_name=master")
       )
   
       it("should fetch the tree and parse trees/blobs", ->
-        tree = project.tree()
+        tree = project.tree("/")
         tree.fetch()
         waitsFor(->
           return tree.length > 0
@@ -252,7 +252,23 @@ describe("GitLab", ->
           expect(subfolder.backboneClass).toEqual("Tree")
           expect(subfolder.path).toEqual("assets")
           expect(subfolder.length).toBe(0)
-          expect(subfolder.url()).toBe(url + "/projects/owner%2Fproject/repository/tree?path=assets") 
+          expect(subfolder.url()).toBe(url + "/projects/owner%2Fproject/repository/tree?path=assets&ref_name=master") 
+        )
+      )
+
+      it("should use branch if specified", ->
+        tree = project.tree("/", "slave")
+        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=%2F&ref_name=slave")
+        tree.fetch()
+        waitsFor(->
+          return tree.length > 0
+        , "tree never loaded", ajaxTimeout
+        )
+        runs(->
+          blob = tree.first()
+          expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave?filepath=README.md") 
+          subfolder = tree.trees[0]
+          expect(subfolder.url()).toBe(url + "/projects/owner%2Fproject/repository/tree?path=assets&ref_name=slave") 
         )
       )
     )
@@ -281,6 +297,10 @@ describe("GitLab", ->
         )
       )
 
+      it("should use branch if specified", ->
+        blob = project.blob("subfolder/file.txt", "slave")
+        expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave?filepath=subfolder/file.txt")
+      )
     )
 
     # add branches to everything (both tree -> blob and blob directly)

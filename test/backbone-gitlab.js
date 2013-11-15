@@ -60,16 +60,18 @@
         project: this
       });
     },
-    tree: function(path) {
+    tree: function(path, branch) {
       return new GitLab.Tree([], {
         project: this,
-        path: path
+        path: path,
+        branch: branch
       });
     },
-    blob: function(path) {
+    blob: function(path, branch) {
       return new GitLab.Blob({
         name: path
       }, {
+        branch: branch,
         project: this
       });
     },
@@ -114,7 +116,8 @@
       return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/blobs/" + (this.branch || "master") + "?filepath=" + (this.get("name"));
     },
     initialize: function(data, options) {
-      return this.project = options.project;
+      this.project = options.project;
+      return this.branch = options.branch || "master";
     },
     fetchContent: function(options) {
       return this.fetch(_.extend({
@@ -132,17 +135,17 @@
     backboneClass: "Tree",
     model: GitLab.Blob,
     url: function() {
-      var call;
-      call = "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree";
-      if (this.path) {
-        call += "?path=" + this.path;
-      }
-      return call;
+      var params;
+      params = {
+        path: this.path,
+        ref_name: this.branch
+      };
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree?" + ($.param(params));
     },
     initialize: function(models, options) {
       this.project = options.project;
       this.path = options.path;
-      this.sha = options.sha;
+      this.branch = options.branch || "master";
       return this.trees = [];
     },
     parse: function(resp, xhr) {
@@ -150,12 +153,12 @@
       _(resp).filter(function(obj) {
         return obj.type === "tree";
       }).map(function(obj) {
-        return _this.trees.push(_this.project.tree(obj.name));
+        return _this.trees.push(_this.project.tree(obj.name, _this.branch));
       });
       return _(resp).filter(function(obj) {
         return obj.type === "blob";
       }).map(function(obj) {
-        return _this.project.blob(obj.name);
+        return _this.project.blob(obj.name, _this.branch);
       });
     }
   });

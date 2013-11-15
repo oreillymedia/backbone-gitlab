@@ -50,15 +50,17 @@ GitLab.Project = GitLab.Model.extend(
   initialize: ->
     @branches = new GitLab.Branches([], project:@)
     @members = new GitLab.Members([], project:@)
-  tree: (path) ->
+  tree: (path, branch) ->
     return new GitLab.Tree([], 
       project:@
       path: path
+      branch: branch
     )
-  blob: (path) ->
+  blob: (path, branch) ->
     return new GitLab.Blob(
       name: path
     ,
+      branch: branch
       project:@
     )
   escaped_path: ->
@@ -104,6 +106,7 @@ GitLab.Blob = GitLab.Model.extend(
     "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/blobs/#{@branch || "master"}?filepath=#{@get("name")}"
   initialize: (data, options) ->
     @project = options.project
+    @branch = options.branch || "master"
   fetchContent: (options) ->
     @fetch(
       _.extend(dataType:"html", options)
@@ -115,26 +118,30 @@ GitLab.Blob = GitLab.Model.extend(
 GitLab.Tree = GitLab.Collection.extend(
   backboneClass: "Tree"
   model: GitLab.Blob
+  
   url: -> 
-    call = "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree"
-    call += "?path=#{@path}" if @path
-    call
+    params = 
+      path: @path
+      ref_name: @branch
+    "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree?#{$.param(params)}"
+  
   initialize: (models, options) ->
     @project = options.project
     @path = options.path
-    @sha = options.sha
+    @branch = options.branch || "master"
     @trees = []
+  
   parse: (resp, xhr) ->
     
     # add trees to trees. we're loosing the tree data but the path here.
     _(resp).filter((obj) =>
       obj.type == "tree"
-    ).map((obj) => @trees.push(@project.tree(obj.name)))
+    ).map((obj) => @trees.push(@project.tree(obj.name, @branch)))
 
     # add blobs to models. we're loosing the blob data but the path here.
     _(resp).filter((obj) =>
       obj.type == "blob"
-    ).map((obj) => @project.blob(obj.name))
+    ).map((obj) => @project.blob(obj.name, @branch))
 )
 
 # Client
