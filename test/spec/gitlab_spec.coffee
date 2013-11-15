@@ -212,7 +212,7 @@ describe("GitLab", ->
       )
     )
 
-    # gitlab.project.contents
+    # gitlab.project.tree
     # ---------------------------------------------------------
 
     describe("gitlab.project.tree", ->
@@ -251,23 +251,44 @@ describe("GitLab", ->
           subfolder = tree.trees[0]
           expect(subfolder.backboneClass).toEqual("Tree")
           expect(subfolder.path).toEqual("assets")
-          expect(subfolder.sha).toEqual("6229c43a7e16fcc7e95f923f8ddadb8281d9c6c6")
           expect(subfolder.length).toBe(0)
           expect(subfolder.url()).toBe(url + "/projects/owner%2Fproject/repository/tree?path=assets") 
         )
       )
-
-      # YOU CAN FETCH MODEL FROM THE MODEL YOU GOT FROM TREE!!!
-
-      # fetch for a tree model only updates the "content" and doesn't erase the other data
-
-      # IT SHOULD FETACH ANOTHER BRANCH BOTH TREE AND BLOB. IT SHOULD KEEP THE BRANCH WHEN GETTING BLOBS FROM TREES!
-
-      # project.blob get blob directly without loading a tree
-
-      # tree fetch should work on subsubfolders. Does name have full path?
-
-      # make sure the save, update, destroy stuff works
     )
+
+    # gitlab.project.blob
+    # ---------------------------------------------------------
+
+    describe("gitlab.project.blob", ->
+
+      it("should return empty blob model", ->
+        blob = project.blob("subfolder/file.txt")
+        expect(blob.backboneClass).toEqual("Blob")
+        expect(blob.id).toBe(undefined)
+        expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=subfolder/file.txt")
+      )
+
+      it("should fetch the content and merge with other data", ->
+        #project = gitlab.project("runemadsen/book") # override project to bypass canned folder thing
+        #project.fetch()
+        #waitsFor(-> 
+        #  return project.id
+        #, "project never loaded", ajaxTimeout
+        #)
+        #runs(->
+        #  expect(project.get("name")).toBe("Book")
+        #)
+      )
+
+    )
+
+      # project.blob should give you empty blob model
+
+      # add branches to everything (both tree -> blob and blob directly)
+
+      # model fetch should merge content into the model data
+
+      # make sure the save, update, destroy stuff works on blobs
   )
 )

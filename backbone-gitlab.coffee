@@ -55,6 +55,12 @@ GitLab.Project = GitLab.Model.extend(
       project:@
       path: path
     )
+  blob: (path) ->
+    return new GitLab.Blob(
+      name: path
+    ,
+      project:@
+    )
   escaped_path: ->
     return @get("path_with_namespace").replace("/", "%2F")
 )
@@ -118,11 +124,7 @@ GitLab.Tree = GitLab.Collection.extend(
     _(resp).filter((obj) =>
       obj.type == "tree"
     ).map((obj) =>
-      @trees.push(new GitLab.Tree([],
-        project: @project
-        path: obj.name
-        sha: obj.id
-      ))
+      @trees.push(@project.tree(obj.name))
     )
 
     # add blobs to models

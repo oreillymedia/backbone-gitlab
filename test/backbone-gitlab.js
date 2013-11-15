@@ -66,6 +66,13 @@
         path: path
       });
     },
+    blob: function(path) {
+      return new GitLab.Blob({
+        name: path
+      }, {
+        project: this
+      });
+    },
     escaped_path: function() {
       return this.get("path_with_namespace").replace("/", "%2F");
     }
@@ -133,11 +140,7 @@
       _(resp).filter(function(obj) {
         return obj.type === "tree";
       }).map(function(obj) {
-        return _this.trees.push(new GitLab.Tree([], {
-          project: _this.project,
-          path: obj.name,
-          sha: obj.id
-        }));
+        return _this.trees.push(_this.project.tree(obj.name));
       });
       return _(resp).filter(function(obj) {
         return obj.type === "blob";
