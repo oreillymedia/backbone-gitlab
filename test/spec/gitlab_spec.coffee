@@ -1,4 +1,4 @@
-ajaxTimeout = 3000
+ajaxTimeout = 1000
 token = "abcdefg"
 url = "http://127.0.0.1:5000"
 
@@ -269,26 +269,24 @@ describe("GitLab", ->
         expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=subfolder/file.txt")
       )
 
-      it("should fetch the content and merge with other data", ->
-        #project = gitlab.project("runemadsen/book") # override project to bypass canned folder thing
-        #project.fetch()
-        #waitsFor(-> 
-        #  return project.id
-        #, "project never loaded", ajaxTimeout
-        #)
-        #runs(->
-        #  expect(project.get("name")).toBe("Book")
-        #)
+      it("should fetch the blob content and merge with other data", ->
+        blob = project.blob("subfolder/file.txt")
+        blob.fetchContent()
+        waitsFor(->
+          return blob.get("content")
+        , "blob content never loaded", ajaxTimeout
+        )
+        runs(->
+          expect(blob.get("content")).toEqual("Hello!")
+        )
       )
 
     )
 
-      # project.blob should give you empty blob model
+    # add branches to everything (both tree -> blob and blob directly)
 
-      # add branches to everything (both tree -> blob and blob directly)
+    # model fetch should merge content into the model data
 
-      # model fetch should merge content into the model data
-
-      # make sure the save, update, destroy stuff works on blobs
+    # make sure the save, update, destroy stuff works on blobs
   )
 )

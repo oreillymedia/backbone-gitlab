@@ -100,10 +100,16 @@ GitLab.Members = GitLab.Collection.extend(
 
 GitLab.Blob = GitLab.Model.extend(
   backboneClass: "Blob"
-  initialize: (data, options) ->
-    @project = options.project
   url: -> 
     "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/blobs/#{@branch || "master"}?filepath=#{@get("name")}"
+  initialize: (data, options) ->
+    @project = options.project
+  fetchContent: (options) ->
+    @fetch(
+      _.extend(dataType:"html", options)
+    )
+  parse: (response, options) ->
+    content: response
 )
 
 GitLab.Tree = GitLab.Collection.extend(
@@ -120,21 +126,15 @@ GitLab.Tree = GitLab.Collection.extend(
     @trees = []
   parse: (resp, xhr) ->
     
-    # add trees to trees
+    # add trees to trees. we're loosing the tree data but the path here.
     _(resp).filter((obj) =>
       obj.type == "tree"
-    ).map((obj) =>
-      @trees.push(@project.tree(obj.name))
-    )
+    ).map((obj) => @trees.push(@project.tree(obj.name)))
 
-    # add blobs to models
+    # add blobs to models. we're loosing the blob data but the path here.
     _(resp).filter((obj) =>
       obj.type == "blob"
-    ).map((obj) =>
-      new GitLab.Blob(obj,
-        project: @project
-      )
-    )
+    ).map((obj) => @project.blob(obj.name))
 )
 
 # Client

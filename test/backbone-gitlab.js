@@ -110,11 +110,21 @@
 
   GitLab.Blob = GitLab.Model.extend({
     backboneClass: "Blob",
+    url: function() {
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/blobs/" + (this.branch || "master") + "?filepath=" + (this.get("name"));
+    },
     initialize: function(data, options) {
       return this.project = options.project;
     },
-    url: function() {
-      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/blobs/" + (this.branch || "master") + "?filepath=" + (this.get("name"));
+    fetchContent: function(options) {
+      return this.fetch(_.extend({
+        dataType: "html"
+      }, options));
+    },
+    parse: function(response, options) {
+      return {
+        content: response
+      };
     }
   });
 
@@ -145,9 +155,7 @@
       return _(resp).filter(function(obj) {
         return obj.type === "blob";
       }).map(function(obj) {
-        return new GitLab.Blob(obj, {
-          project: _this.project
-        });
+        return _this.project.blob(obj.name);
       });
     }
   });
