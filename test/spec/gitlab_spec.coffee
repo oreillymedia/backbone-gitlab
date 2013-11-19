@@ -20,7 +20,13 @@
 #
 # The AJAX helpers can of course be mixes with Jasmine's asynchronous helpers, as seen in the tests
 # below.
-#  
+#
+
+# TODO
+# MAKE SURE THAT ALL ASSOCIATIONS HAVE MINIMUM OF DATA TO DO STUFF
+# CHECK THAT ALL MODELS THAT REWUIRE BRANCHES FAIL WHEN NOT PASSED IN
+# make sure that the trees api returns full path in blob names when listing a subfolder. Otherwise blob.get("name") logic is wrong.
+# MAKE SURE ALL THE ?file_path is in data instead!!!
 
 ajaxTimeout = 1000
 token = "abcdefg"
@@ -88,6 +94,33 @@ describe("GitLab", ->
         keys = gitlab.user.sshkeys
         expect(keys.backboneClass).toEqual("SSHKeys")
         expect(keys.length).toBe(0)
+      )
+    )
+  )
+
+  # GitLab.Keys
+  # ----------------------------------------------------------------
+
+  describe("Keys", ->
+
+    keys = null
+    beforeEach(-> keys = new GitLab.Keys()
+
+    describe("fetch()", ->
+      it("should call correct URL", ->
+        spyOnAjax()
+        keys.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/user/keys")
+      )
+    )
+
+    describe("create()", ->
+      it("should call the correct URL", ->
+        spyOnAjax()
+        members.create(key:"Something")
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/user/keys")
       )
     )
   )
@@ -239,15 +272,16 @@ describe("GitLab", ->
         expect(last_call_data.path).toEqual("%2F")
       )
 
-      it("should call correct URL with branch", ->
+      it("should call correct URL with branch and subfolder path", ->
         spyOnAjax()
         tree = new GitLab.Tree([]
         , 
           project:project
-          path:"/"
+          path:"subfolder"
           branch:"slave"
         )
         tree.fetch()
+        expect(last_call_data.path).toEqual("subfolder")
         expect(last_call_data.ref_name).toEqual("slave")
       )
 
@@ -337,6 +371,10 @@ describe("GitLab", ->
       )
     )
 
+    it("CLEAN UP CREATE AND UPDATE AND MAKE SURE THAT RESPONSE FROM THOSE DONT BREAK BECAUSE OF THE RAW BLOB PARSE FUNCTIONALITY", ->
+      expect(true).toBe(false)
+    )
+
     describe("save()", ->
 
       describe("CREATE", ->
@@ -378,49 +416,5 @@ describe("GitLab", ->
         # CHECK THAT MODEL fetchContent or tree() always gives back a blob model that calls update, not create!!!!
       )
     )
-  )
-
-  # MAKE SURE THAT ALL ASSOCIATIONS HAVE MINIMUM OF DATA TO DO STUFF
-
-  # CHECK THAT ALL MODELS THAT REWUIRE BRANCHES FAIL WHEN NOT PASSED IN
-
-  # KEYS!!!!
-
-  # CHECK TREE URL
-  # expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=%2F&ref_name=master")
-  # expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=subfolder&ref_name=master")
-
-  #it("should fill collection on fetch", ->
-  #      expect(user.sshkeys.url()).toEqual(url + "/user/keys")
-  #      user.sshkeys.fetch()
-  #      waitsFor(-> 
-  #        return user.sshkeys.length > 0
-  #      , "ssh keys never loaded", ajaxTimeout
-  #      )
-  #      runs(->
-  #        expect(user.sshkeys.length).toBe(2)
-  #        expect(user.sshkeys.first().backboneClass).toEqual("SSHKey")
-  #        expect(user.sshkeys.first().get("title")).toEqual("Public key")
-  #      )
-  #    )
-#
-  #    it("should create a new ssh key", ->
-  #      user.sshkeys.create(key:"Something")
-  #      waitsFor(-> 
-  #        return user.sshkeys.length > 0 && user.sshkeys.first().get("title")
-  #      , "ssh keys never created", ajaxTimeout
-  #      )
-  #      runs(->
-  #        expect(user.sshkeys.length).toBe(1)
-  #        expect(user.sshkeys.first().get("title")).toEqual("Public key")
-  #      )
-  #    )
+  ) 
 )
-
-# make sure that the trees api returns full path in blob names when listing a subfolder. Otherwise blob.get("name") logic is wrong.
-
-# TEST RESPONSE JSON IS ACTUALLY PARSED IN PARSE. NOT RIGHT NOW.
-
-# MAKE SURE ALL THE ?file_path is in data instead!!!
-
-# Clean up where I check URL's. One place to check GitLab.Blob urls.... One place to check GitLab.Tree url. In its own tests
