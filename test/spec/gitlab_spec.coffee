@@ -1,3 +1,27 @@
+# GitLab Specs
+#
+# In these tests, results from the "test/canned" folder will be served as API responses.
+# If you want to check that a specific URL was called, you can use the AJAX helpers:
+# 
+#   spyOnAjax()
+#   model.fetch()
+#   expect(lastAjaxCall().args[0].type).toEqual("GET")
+#   expect(lastAjaxCall().args[0].url).toEqual("www.runemadsen.com/user")
+#
+# Remember that the AJAX calls are actually being made, so to assert something on the response, 
+# you have to use Jasmine's asynchronous helpers:
+#
+#   model.fetch()
+#   waitsFor(->
+#     return model.id == 1
+#   , "never loaded", 2000
+#   )
+#   runs(-> console.log "Done!")
+#
+# The AJAX helpers can of course be mixes with Jasmine's asynchronous helpers, as seen in the tests
+# below.
+#  
+
 ajaxTimeout = 1000
 token = "abcdefg"
 url = "http://127.0.0.1:5000"
@@ -5,115 +29,276 @@ url = "http://127.0.0.1:5000"
 describe("GitLab", ->
 
   gitlab = null
-  user = null
+  project = null
+  project2 = null
 
   beforeEach(->
     GitLab.url = url
     gitlab = new GitLab.Client(token)
-    user = gitlab.user
+    project = gitlab.project("owner/project")
+    project2 = gitlab.project("runemadsen/book")
   )
 
-  # GitLab
+  # Helpers
   # ----------------------------------------------------------------
 
-  it("should instantiate a new GitLab client", ->
-    expect(gitlab.token).toBe(token)
+  spyOnAjax = ->
+    spyOn(Backbone, "ajax").andCallThrough()
+
+  lastAjaxCall = ->
+    Backbone.ajax.mostRecentCall
+
+
+  # GitLab.Client
+  # ----------------------------------------------------------------
+
+  describe("GitLab.Client", ->
+
+    it("saves token", ->
+      expect(gitlab.token).toBe(token)
+    )
+
+    describe("Associations", ->
+      it("returns empty GitLab.User model on gitlab.user", ->
+        expect(gitlab.user.backboneClass).toEqual("User")
+      )
+    )
   )
 
-  # GitLab.Tree
+  # GitLab.User
   # ----------------------------------------------------------------
 
-  # describe("GitLab.Tree", ->
-  #   it("should parse listing into array of tree and blobs", ->
-  #     tree = new GitLab.Tree([
-  #       {
-  #         "name": "assets",
-  #         "type": "tree",
-  #         "mode": "040000",
-  #         "id": "6229c43a7e16fcc7e95f923f8ddadb8281d9c6c6"
-  #       }, 
-  #       {
-  #         "name": "Rakefile",
-  #         "type": "blob",
-  #         "mode": "100644",
-  #         "id": "35b2f05cbb4566b71b34554cf184a9d0bd9d46d6"
-  #       }
-  #     ])
-  #     expect(tree.first().backboneClass).toEqual("Tree")
-  #     expect(tree.first().path).toEqual("assets")
-  #     expect(tree.first().sha).toEqual("6229c43a7e16fcc7e95f923f8ddadb8281d9c6c6")
-  #     expect(tree.first().length).toBe(0)
-  #     expect(tree.first().url()).toBe(url + "/projects/runemadsen%2Fbook?path=assets")  # 
-  #     expect(tree.last().backboneClass).toEqual("Blob")
-  #     expect(tree.last().get("name")).toEqual("Rakefile")
-  #   )
-  # )
+  describe("GitLab.User", ->
 
+    describe("fetch()", ->
+      it("should call correct URL", ->
+        spyOnAjax()
+        gitlab.user.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/user")
+      )
+    )
+  )
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  # Assocsiations
+  # ----------------------------------------------------------------
+
+  describe("Associations", ->
+
+    project = null
+
+    beforeEach(->
+      project = gitlab.project("runemadsen/book")
+    )
+
+    
+
+    it("returns empty GitLab.Keys collection on user.sshkeys", ->
+      keys = gitlab.user.sshkeys
+      expect(keys.backboneClass).toEqual("SSHKeys")
+      expect(keys.length).toBe(0)
+    )
+
+    it("returns empty GitLab.Project model on gitlab.project()", ->
+      expect(project.backboneClass).toEqual("Project")
+    )
+
+    it("returns empty GitLab.Branches collection on project.branches", ->
+      branches = project.branches
+      expect(branches.backboneClass).toEqual("Branches")
+      expect(branches.project).toEqual(project)
+      expect(branches.length).toBe(0)
+    )
+
+    it("returns empty GitLab.Blob model on project.blob(path)", ->
+      blob = project.blob("subfolder/file.txt")
+      expect(blob.backboneClass).toEqual("Blob")
+      expect(blob.project).toEqual(project)
+      expect(blob.get("name")).toEqual("subfolder/file.txt")
+    )
+
+    it("returns empty GitLab.Blob model on project.blob(path, branch)", ->
+      blob = project.blob("subfolder/file.txt", "slave")
+      expect(blob.backboneClass).toEqual("Blob")
+      expect(blob.project).toEqual(project)
+      expect(blob.branch).toEqual("slave")
+      expect(blob.get("name")).toEqual("subfolder/file.txt")
+    )
+
+    it("returns empty GitLab.Tree model on project.tree(path)", ->
+      tree = project.tree("/")
+      expect(tree.backboneClass).toEqual("Tree")
+      expect(tree.project).toEqual(project)
+    )
+
+    it("returns empty GitLab.Tree model on project.tree(path, branch)", ->
+      tree = project.tree("/", "slave")
+      expect(tree.backboneClass).toEqual("Tree")
+      expect(tree.project).toEqual(project)
+      expect(tree.branch).toEqual("slave")
+    )
+  )
+
+  # CHECK THAT ALL MODELS THAT REWUIRE BRANCHES FAIL WHEN NOT PASSED IN
+
+  # KEYS!!!!
+
+  # CHCK PROJECT URL!!!!!
+  # expect(project.url()).toEqual(url + "/projects/runemadsen%2Fbook")
+  
+  # CHECK THAT PATH GETS SET INSIDE PROJECT MODEL, NOT FROM GITLAB.project() 
+  #expect(project.get("path")).toEqual("book")
+  #expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
+  #expect(project.id).toBe(undefined)
+
+  # CHECK TREE URL
+  # expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=%2F&ref_name=master")
+  # expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=subfolder&ref_name=master")
+
+  #it("should fill collection on fetch", ->
+  #      expect(user.sshkeys.url()).toEqual(url + "/user/keys")
+  #      user.sshkeys.fetch()
+  #      waitsFor(-> 
+  #        return user.sshkeys.length > 0
+  #      , "ssh keys never loaded", ajaxTimeout
+  #      )
+  #      runs(->
+  #        expect(user.sshkeys.length).toBe(2)
+  #        expect(user.sshkeys.first().backboneClass).toEqual("SSHKey")
+  #        expect(user.sshkeys.first().get("title")).toEqual("Public key")
+  #      )
+  #    )
+#
+  #    it("should create a new ssh key", ->
+  #      user.sshkeys.create(key:"Something")
+  #      waitsFor(-> 
+  #        return user.sshkeys.length > 0 && user.sshkeys.first().get("title")
+  #      , "ssh keys never created", ajaxTimeout
+  #      )
+  #      runs(->
+  #        expect(user.sshkeys.length).toBe(1)
+  #        expect(user.sshkeys.first().get("title")).toEqual("Public key")
+  #      )
+  #    )
+
+  
+#
   # GitLab.Blob
   # ----------------------------------------------------------------
 
-  #describe("GitLab.Blob", ->
-  #  it("should call correct url", ->
-  #    # FILL WITH DATA FROM TREE AND MAKE SURE THE FETCH, SAVE, DESTROY METHODS CALL CORRECT URL
-  #    expect(true).toBe(false)
-  #  )
-  #)
-
-  # gitlab.user
-  # ----------------------------------------------------------------
-
-  describe("gitlab.user", ->
+  describe("GitLab.Blob", ->
     
-    it("should return empty model", ->
-      expect(gitlab.user.backboneClass).toEqual("User")
+    masterBlob = null
+    slaveBlob = null
+
+    beforeEach(->
+      masterBlob = new GitLab.Blob(
+        name: "subfolder/master.txt"
+      ,
+        project: project1
+      )
+
+      slaveBlob = new GitLab.Blob(
+        name: "subfolder/slave.txt"
+      ,
+        project: project1
+        branch: "slave"
+      )
     )
 
-    it("should fill empty model on fetch", ->
-      expect(user.url()).toEqual(url + "/user")
-      user.fetch()
-      waitsFor(-> 
-        return user.id == 1
-      , "user never loaded", ajaxTimeout
+    it("should fail if correct options are not given", ->
+      expect(true).toBe(false)
+    )
+
+    describe("fetchContent()", ->
+
+      it("should fetch the blob contents and merge with other data", ->
+        spyOnAjax()
+        masterBlob.fetchContent()
+        waitsFor(->
+          return masterBlob.get("content")
+        , "blob content never loaded", ajaxTimeout
+        )
+        runs(->
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=subfolder/master.txt")
+          expect(masterBlob.get("content")).toEqual("Hello!")
+          expect(masterBlob.get("name")).toEqual("subfolder/master.txt")
+        )
       )
-      runs(->
-        expect(user.get("username")).toEqual("runemadsen")
+  
+      it("should use branch if specified", ->
+        spyOnAjax()
+        slaveBlob.fetchContent()
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave?filepath=subfolder/slave.txt")
       )
     )
 
-    # gitlab.user.keys
-    # ---------------------------------------------------------
+    describe("defaultCommitMessage()", ->
 
-    describe("gitlab.user.keys", ->
-
-      it("should instantiate an empty GitLab.Keys collection on GitLab.User#initialize", ->
-        expect(user.sshkeys.backboneClass).toEqual("SSHKeys")
-        expect(user.sshkeys.length).toBe(0)
+      it("should give correct message when isNew", ->
+        expect(masterBlob.defaultCommitMessage()).toEqual("Created subfolder/master.txt")
       )
 
-      it("should fill collection on fetch", ->
-        expect(user.sshkeys.url()).toEqual(url + "/user/keys")
-        user.sshkeys.fetch()
-        waitsFor(-> 
-          return user.sshkeys.length > 0
-        , "ssh keys never loaded", ajaxTimeout
+      it("should give correct message when !isNew", ->
+        masterBlob.set("id", 1)
+        expect(masterBlob.defaultCommitMessage()).toEqual("Updated subfolder/master.txt")
+      )
+    )
+
+    describe("save()", ->
+
+      describe("CREATE", ->
+
+        it("should use correct defaults", ->
+          spyOnAjax() 
+          masterBlob.set("content", "New Content")
+          masterBlob.save()
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+          expect(lastAjaxCall().args[0].type).toEqual("POST")
+          expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
+            file_name: "master.txt"
+            file_path: "subfolder/"
+            content: "New Content"
+            commit_message: "Created subfolder/master.txt"
+            branch_name: "master"
+          )
         )
-        runs(->
-          expect(user.sshkeys.length).toBe(2)
-          expect(user.sshkeys.first().backboneClass).toEqual("SSHKey")
-          expect(user.sshkeys.first().get("title")).toEqual("Public key")
+  
+        it("should use branch and commit message if specified", ->
+          spyOnAjax() 
+          slaveBlob.set("content", "New Content")
+          slaveBlob.save(
+            commit_message: "Another Message"
+          )
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+          expect(lastAjaxCall().args[0].type).toEqual("POST")
+          expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
+            file_name: "slave.txt"
+            file_path: "subfolder/"
+            content: "New Content"
+            commit_message: "Another Message"
+            branch_name: "slave"
+          )
         )
       )
-
-      it("should create a new ssh key", ->
-        user.sshkeys.create(key:"Something")
-        waitsFor(-> 
-          return user.sshkeys.length > 0 && user.sshkeys.first().get("title")
-        , "ssh keys never created", ajaxTimeout
-        )
-        runs(->
-          expect(user.sshkeys.length).toBe(1)
-          expect(user.sshkeys.first().get("title")).toEqual("Public key")
-        )
+  
+      describe("UPDATE", ->
+        # CHECK THAT MODEL fetchContent or tree() always gives back a blob model that calls update, not create!!!!
       )
     )
   )
@@ -123,19 +308,7 @@ describe("GitLab", ->
 
   describe("gitlab.project", ->
 
-    project = null
-
-    beforeEach(-> 
-      project = gitlab.project("owner/project")
-    )
-
-    it("should return empty project model", ->
-      project = gitlab.project("runemadsen/book") # override project to bypass canned folder thing
-      expect(project.get("path")).toEqual("book")
-      expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
-      expect(project.id).toBe(undefined)
-      expect(project.url()).toEqual(url + "/projects/runemadsen%2Fbook")
-    )
+    
 
     it("should fetch the project", ->
       project = gitlab.project("runemadsen/book") # override project to bypass canned folder thing
@@ -153,11 +326,6 @@ describe("GitLab", ->
     # ---------------------------------------------------------
 
     describe("gitlab.project.branches", ->
-
-      it("should instantiate an empty GitLab.Branches collection on GitLab.Project#initialize", ->
-        expect(project.branches.backboneClass).toEqual("Branches")
-        expect(project.branches.length).toBe(0)
-      )
 
       it("should fill collection on fetch", ->
         expect(project.branches.url()).toEqual(url + "/projects/owner%2Fproject/repository/branches")
@@ -217,20 +385,6 @@ describe("GitLab", ->
 
     describe("gitlab.project.tree", ->
 
-      it("should return empty tree model", ->
-        tree = project.tree("/")
-        expect(tree.backboneClass).toEqual("Tree")
-        expect(tree.id).toBe(undefined)
-        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=%2F&ref_name=master")
-      )
-
-      it("should return empty subfolder tree", ->
-        tree = project.tree("subfolder")
-        expect(tree.backboneClass).toEqual("Tree")
-        expect(tree.id).toBe(undefined)
-        expect(tree.url()).toEqual(url + "/projects/owner%2Fproject/repository/tree?path=subfolder&ref_name=master")
-      )
-  
       it("should fetch the tree and parse trees/blobs", ->
         tree = project.tree("/")
         tree.fetch()
@@ -243,8 +397,6 @@ describe("GitLab", ->
           expect(tree.length).toBe(1)
           blob = tree.first()
           expect(blob.backboneClass).toEqual("Blob")
-          expect(blob.get("name")).toEqual("README.md")
-          expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=README.md") 
           
           # put trees in trees array
           expect(tree.trees.length).toBe(1)
@@ -266,47 +418,20 @@ describe("GitLab", ->
         )
         runs(->
           blob = tree.first()
-          expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave?filepath=README.md") 
+          expect(blob.branch).toEqual("slave") 
           subfolder = tree.trees[0]
           expect(subfolder.url()).toBe(url + "/projects/owner%2Fproject/repository/tree?path=assets&ref_name=slave") 
         )
       )
     )
 
-    # gitlab.project.blob
-    # ---------------------------------------------------------
-
-    describe("gitlab.project.blob", ->
-
-      it("should return empty blob model", ->
-        blob = project.blob("subfolder/file.txt")
-        expect(blob.backboneClass).toEqual("Blob")
-        expect(blob.id).toBe(undefined)
-        expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=subfolder/file.txt")
-      )
-
-      it("should fetch the blob content and merge with other data", ->
-        blob = project.blob("subfolder/file.txt")
-        blob.fetchContent()
-        waitsFor(->
-          return blob.get("content")
-        , "blob content never loaded", ajaxTimeout
-        )
-        runs(->
-          expect(blob.get("content")).toEqual("Hello!")
-        )
-      )
-
-      it("should use branch if specified", ->
-        blob = project.blob("subfolder/file.txt", "slave")
-        expect(blob.url()).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave?filepath=subfolder/file.txt")
-      )
-    )
-
-    # add branches to everything (both tree -> blob and blob directly)
-
-    # model fetch should merge content into the model data
-
-    # make sure the save, update, destroy stuff works on blobs
   )
 )
+
+# make sure that the trees api returns full path in blob names when listing a subfolder. Otherwise blob.get("name") logic is wrong.
+
+# TEST RESPONSE JSON IS ACTUALLY PARSED IN PARSE. NOT RIGHT NOW.
+
+# MAKE SURE ALL THE ?file_path is in data instead!!!
+
+# Clean up where I check URL's. One place to check GitLab.Blob urls.... One place to check GitLab.Tree url. In its own tests

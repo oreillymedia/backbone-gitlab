@@ -112,8 +112,31 @@
 
   GitLab.Blob = GitLab.Model.extend({
     backboneClass: "Blob",
-    url: function() {
-      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/blobs/" + (this.branch || "master") + "?filepath=" + (this.get("name"));
+    sync: function(method, model, options) {
+      var baseURL;
+      options = options || {};
+      baseURL = "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository";
+      if (method.toLowerCase() === "read") {
+        options.url = "" + baseURL + "/blobs/" + this.branch + "?filepath=" + (this.get("name"));
+      } else {
+        options.url = "" + baseURL + "/files";
+      }
+      return GitLab.sync.apply(this, arguments);
+    },
+    toJSON: function() {
+      return {
+        file_path: this.get("name"),
+        branch_name: this.branch,
+        content: this.get("content"),
+        commit_message: this.get("commit_message") || this.defaultCommitMessage()
+      };
+    },
+    defaultCommitMessage: function() {
+      if (this.isNew()) {
+        return "Created " + (this.get("name"));
+      } else {
+        return "Updated " + (this.get("name"));
+      }
     },
     initialize: function(data, options) {
       this.project = options.project;

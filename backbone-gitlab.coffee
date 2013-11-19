@@ -101,16 +101,41 @@ GitLab.Members = GitLab.Collection.extend(
 # --------------------------------------------------------
 
 GitLab.Blob = GitLab.Model.extend(
+  
   backboneClass: "Blob"
-  url: -> 
-    "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/blobs/#{@branch || "master"}?filepath=#{@get("name")}"
+
+  sync: (method, model, options) ->
+    options = options || {}
+    baseURL = "#{GitLab.url}/projects/#{@project.escaped_path()}/repository"
+    if method.toLowerCase() == "read"
+      options.url = "#{baseURL}/blobs/#{@branch}?filepath=#{@get("name")}"
+    else
+      options.url = "#{baseURL}/files"
+    GitLab.sync.apply(this, arguments)
+
+  toJSON: ->
+    {
+      file_path: @get("name")
+      branch_name: @branch
+      content: @get("content")
+      commit_message: @get("commit_message") || @defaultCommitMessage()
+    }
+  
+  defaultCommitMessage: ->
+    if @isNew()
+      "Created #{@get("name")}"
+    else
+      "Updated #{@get("name")}"
+
   initialize: (data, options) ->
     @project = options.project
     @branch = options.branch || "master"
+  
   fetchContent: (options) ->
     @fetch(
       _.extend(dataType:"html", options)
     )
+
   parse: (response, options) ->
     content: response
 )
