@@ -76,10 +76,14 @@ GitLab.Branch = GitLab.Model.extend(
 
 GitLab.Branches = GitLab.Collection.extend(
   backboneClass: "Branches"
-  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/branches"
-  initialize: (models, options) ->
-    @project = options.project
   model: GitLab.Branch
+
+  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/branches"
+  
+  initialize: (models, options) ->
+    options = options || {}
+    if !options.project then throw "You have to initialize GitLab.Branches with a GitLab.Project model"
+    @project = options.project
 )
 
 # Members
@@ -93,16 +97,24 @@ GitLab.Members = GitLab.Collection.extend(
   backboneClass: "Members"
   url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/members"
   initialize: (models, options) ->
+    options = options || {}
+    if !options.project then throw "You have to initialize GitLab.Members with a GitLab.Project model"
     @project = options.project
   model: GitLab.Member
 )
 
-# Git Data
+# Blob
 # --------------------------------------------------------
 
 GitLab.Blob = GitLab.Model.extend(
   
   backboneClass: "Blob"
+
+  initialize: (data, options) ->
+    options = options || {}
+    if !options.project then throw "You have to initialize GitLab.Blob with a GitLab.Project model"
+    @project = options.project
+    @branch = options.branch || "master"
 
   sync: (method, model, options) ->
     options = options || {}
@@ -126,10 +138,6 @@ GitLab.Blob = GitLab.Model.extend(
       "Created #{@get("name")}"
     else
       "Updated #{@get("name")}"
-
-  initialize: (data, options) ->
-    @project = options.project
-    @branch = options.branch || "master"
   
   fetchContent: (options) ->
     @fetch(
@@ -140,21 +148,28 @@ GitLab.Blob = GitLab.Model.extend(
     content: response
 )
 
+# Tree
+# --------------------------------------------------------
+
 GitLab.Tree = GitLab.Collection.extend(
+  
   backboneClass: "Tree"
   model: GitLab.Blob
-  
-  url: -> 
-    params = 
-      path: @path
-      ref_name: @branch
-    "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree?#{$.param(params)}"
+  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree"
   
   initialize: (models, options) ->
+    options = options || {}
+    if !options.project then throw "You have to initialize GitLab.Tree with a GitLab.Project model"
     @project = options.project
     @path = options.path
     @branch = options.branch || "master"
     @trees = []
+
+  fetch: (options) ->
+    options = options || {}
+    options.data = path: @path
+    options.data.ref_name = @branch
+    GitLab.Collection.prototype.fetch.apply(this, [options])
   
   parse: (resp, xhr) ->
     

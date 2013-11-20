@@ -86,13 +86,17 @@
 
   GitLab.Branches = GitLab.Collection.extend({
     backboneClass: "Branches",
+    model: GitLab.Branch,
     url: function() {
       return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches";
     },
     initialize: function(models, options) {
+      options = options || {};
+      if (!options.project) {
+        throw "You have to initialize GitLab.Branches with a GitLab.Project model";
+      }
       return this.project = options.project;
-    },
-    model: GitLab.Branch
+    }
   });
 
   GitLab.Member = GitLab.Model.extend({
@@ -105,6 +109,10 @@
       return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/members";
     },
     initialize: function(models, options) {
+      options = options || {};
+      if (!options.project) {
+        throw "You have to initialize GitLab.Members with a GitLab.Project model";
+      }
       return this.project = options.project;
     },
     model: GitLab.Member
@@ -112,6 +120,14 @@
 
   GitLab.Blob = GitLab.Model.extend({
     backboneClass: "Blob",
+    initialize: function(data, options) {
+      options = options || {};
+      if (!options.project) {
+        throw "You have to initialize GitLab.Blob with a GitLab.Project model";
+      }
+      this.project = options.project;
+      return this.branch = options.branch || "master";
+    },
     sync: function(method, model, options) {
       var baseURL;
       options = options || {};
@@ -138,10 +154,6 @@
         return "Updated " + (this.get("name"));
       }
     },
-    initialize: function(data, options) {
-      this.project = options.project;
-      return this.branch = options.branch || "master";
-    },
     fetchContent: function(options) {
       return this.fetch(_.extend({
         dataType: "html"
@@ -158,18 +170,25 @@
     backboneClass: "Tree",
     model: GitLab.Blob,
     url: function() {
-      var params;
-      params = {
-        path: this.path,
-        ref_name: this.branch
-      };
-      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree?" + ($.param(params));
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree";
     },
     initialize: function(models, options) {
+      options = options || {};
+      if (!options.project) {
+        throw "You have to initialize GitLab.Tree with a GitLab.Project model";
+      }
       this.project = options.project;
       this.path = options.path;
       this.branch = options.branch || "master";
       return this.trees = [];
+    },
+    fetch: function(options) {
+      options = options || {};
+      options.data = {
+        path: this.path
+      };
+      options.data.ref_name = this.branch;
+      return GitLab.Collection.prototype.fetch.apply(this, [options]);
     },
     parse: function(resp, xhr) {
       var _this = this;

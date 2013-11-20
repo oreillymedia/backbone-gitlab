@@ -54,6 +54,9 @@ describe("GitLab", ->
   lastAjaxCall = ->
     Backbone.ajax.mostRecentCall
 
+  lastAjaxCallData = ->
+    d = Backbone.ajax.mostRecentCall.args[0].data || {}
+    if _.isString(d) then JSON.parse(d) else d
 
   # GitLab.Client
   # ----------------------------------------------------------------
@@ -200,8 +203,8 @@ describe("GitLab", ->
     beforeEach(-> branches = new GitLab.Branches([], project:project))
 
     describe("initialize()", ->
-      it("should complain no project is passed in options", ->
-        expect(true).toBe(false)
+      it("should complain if no project is passed in options", ->
+        expect(-> new GitLab.Branches()).toThrow(new Error("You have to initialize GitLab.Branches with a GitLab.Project model"));
       )
     )
 
@@ -225,7 +228,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain no project is passed in options", ->
-        expect(true).toBe(false)
+        expect(-> new GitLab.Members()).toThrow(new Error("You have to initialize GitLab.Members with a GitLab.Project model"));
       )
     )
 
@@ -255,7 +258,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain if no project, path are passed in options", ->
-        expect(true).toBe(false)
+        expect(-> new GitLab.Tree()).toThrow(new Error("You have to initialize GitLab.Tree with a GitLab.Project model"));
       )
     )
 
@@ -271,7 +274,7 @@ describe("GitLab", ->
         tree.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/tree")
-        expect(last_call_data.path).toEqual("%2F")
+        expect(lastAjaxCallData().path).toEqual("/")
       )
 
       it("should call correct URL with branch and subfolder path", ->
@@ -283,8 +286,8 @@ describe("GitLab", ->
           branch:"slave"
         )
         tree.fetch()
-        expect(last_call_data.path).toEqual("subfolder")
-        expect(last_call_data.ref_name).toEqual("slave")
+        expect(lastAjaxCallData().path).toEqual("subfolder")
+        expect(lastAjaxCallData().ref_name).toEqual("slave")
       )
 
       it("should parse trees and blobs", ->
@@ -323,19 +326,19 @@ describe("GitLab", ->
       masterBlob = new GitLab.Blob(
         name: "subfolder/master.txt"
       ,
-        project: project1
+        project: project
       )
 
       slaveBlob = new GitLab.Blob(
         name: "subfolder/slave.txt"
       ,
-        project: project1
+        project: project
         branch: "slave"
       )
     )
 
     it("should fail if correct options are not given", ->
-      expect(true).toBe(false)
+      expect(-> new GitLab.Blob().toThrow(new Error("You have to initialize GitLab.Blob with a GitLab.Project model"));
     )
 
     describe("fetchContent()", ->
@@ -373,49 +376,48 @@ describe("GitLab", ->
       )
     )
 
-    it("CLEAN UP CREATE AND UPDATE AND MAKE SURE THAT RESPONSE FROM THOSE DONT BREAK BECAUSE OF THE RAW BLOB PARSE FUNCTIONALITY", ->
+    it("MAKE SURE THAT RESPONSE FROM CREATE AND UPDATE DONT BREAK BECAUSE OF THE RAW BLOB PARSE FUNCTIONALITY", ->
       expect(true).toBe(false)
     )
 
     describe("save()", ->
 
-      describe("CREATE", ->
-
-        it("should use correct defaults", ->
-          spyOnAjax() 
-          masterBlob.set("content", "New Content")
-          masterBlob.save()
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
-          expect(lastAjaxCall().args[0].type).toEqual("POST")
-          expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
-            file_name: "master.txt"
-            file_path: "subfolder/"
-            content: "New Content"
-            commit_message: "Created subfolder/master.txt"
-            branch_name: "master"
-          )
-        )
-  
-        it("should use branch and commit message if specified", ->
-          spyOnAjax() 
-          slaveBlob.set("content", "New Content")
-          slaveBlob.save(
-            commit_message: "Another Message"
-          )
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
-          expect(lastAjaxCall().args[0].type).toEqual("POST")
-          expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
-            file_name: "slave.txt"
-            file_path: "subfolder/"
-            content: "New Content"
-            commit_message: "Another Message"
-            branch_name: "slave"
-          )
+      it("should make POST if isNew", ->
+        spyOnAjax() 
+        masterBlob.set("content", "New Content")
+        masterBlob.save()
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+        expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
+          file_name: "master.txt"
+          file_path: "subfolder/"
+          content: "New Content"
+          commit_message: "Created subfolder/master.txt"
+          branch_name: "master"
         )
       )
+
+      it("should make PUT if not isNew", ->
+        # WHAT DETERMINES WHETHER THE BLOB IS NEW OR NOT?
+        # get blob
+        # fetchContent
+        # save
+        # make sure it's a PUT
+      )
   
-      describe("UPDATE", ->
-        # CHECK THAT MODEL fetchContent or tree() always gives back a blob model that calls update, not create!!!!
+      it("should use branch and commit message if specified", ->
+        spyOnAjax() 
+        slaveBlob.set("content", "New Content")
+        slaveBlob.save(
+          commit_message: "Another Message"
+        )
+        expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
+          file_name: "slave.txt"
+          file_path: "subfolder/"
+          content: "New Content"
+          commit_message: "Another Message"
+          branch_name: "slave"
+        )
       )
     )
   ) 
