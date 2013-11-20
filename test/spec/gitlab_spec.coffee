@@ -101,10 +101,12 @@ describe("GitLab", ->
   # GitLab.Keys
   # ----------------------------------------------------------------
 
-  describe("Keys", ->
+  describe("SSHKeys", ->
 
     keys = null
-    beforeEach(-> keys = new GitLab.Keys()
+    beforeEach(-> 
+      keys = new GitLab.SSHKeys()
+    )
 
     describe("fetch()", ->
       it("should call correct URL", ->
@@ -118,7 +120,7 @@ describe("GitLab", ->
     describe("create()", ->
       it("should call the correct URL", ->
         spyOnAjax()
-        members.create(key:"Something")
+        keys.create(key:"Something")
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/user/keys")
       )
