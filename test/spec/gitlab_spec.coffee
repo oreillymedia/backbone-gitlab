@@ -338,7 +338,7 @@ describe("GitLab", ->
     )
 
     it("should fail if correct options are not given", ->
-      expect(-> new GitLab.Blob().toThrow(new Error("You have to initialize GitLab.Blob with a GitLab.Project model"));
+      expect(-> new GitLab.Blob()).toThrow(new Error("You have to initialize GitLab.Blob with a GitLab.Project model"))
     )
 
     describe("fetchContent()", ->
@@ -388,13 +388,10 @@ describe("GitLab", ->
         masterBlob.save()
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
         expect(lastAjaxCall().args[0].type).toEqual("POST")
-        expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
-          file_name: "master.txt"
-          file_path: "subfolder/"
-          content: "New Content"
-          commit_message: "Created subfolder/master.txt"
-          branch_name: "master"
-        )
+        expect(lastAjaxCallData().file_path).toEqual("subfolder/master.txt")
+        expect(lastAjaxCallData().content).toEqual("New Content")
+        expect(lastAjaxCallData().commit_message).toEqual("Created subfolder/master.txt")
+        expect(lastAjaxCallData().branch_name).toEqual("master")
       )
 
       it("should make PUT if not isNew", ->
@@ -405,19 +402,18 @@ describe("GitLab", ->
         # make sure it's a PUT
       )
   
-      it("should use branch and commit message if specified", ->
+      it("should use branch and commit message", ->
         spyOnAjax() 
         slaveBlob.set("content", "New Content")
         slaveBlob.save(
-          commit_message: "Another Message"
+          commit_message: "BLABLA"
         )
-        expect(JSON.parse(lastAjaxCall().args[0].data)).toEqual(
-          file_name: "slave.txt"
-          file_path: "subfolder/"
-          content: "New Content"
-          commit_message: "Another Message"
-          branch_name: "slave"
-        )
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+        expect(lastAjaxCallData().file_path).toEqual("subfolder/slave.txt")
+        expect(lastAjaxCallData().content).toEqual("New Content")
+        expect(lastAjaxCallData().commit_message).toEqual("BLABLA")
+        expect(lastAjaxCallData().branch_name).toEqual("slave")
       )
     )
   ) 
