@@ -23,6 +23,8 @@
 #
 
 # TODO
+# PARSE blob.name into file_path ALWAYS
+# remove all ? from URLs and add to data
 # MAKE SURE THAT ALL ASSOCIATIONS HAVE MINIMUM OF DATA TO DO STUFF
 # CHECK THAT ALL MODELS THAT REWUIRE BRANCHES FAIL WHEN NOT PASSED IN
 # make sure that the trees api returns full path in blob names when listing a subfolder. Otherwise blob.get("name") logic is wrong.
@@ -328,7 +330,6 @@ describe("GitLab", ->
       ,
         project: project
       )
-
       slaveBlob = new GitLab.Blob(
         name: "subfolder/slave.txt"
       ,
@@ -376,10 +377,6 @@ describe("GitLab", ->
       )
     )
 
-    it("MAKE SURE THAT RESPONSE FROM CREATE AND UPDATE DONT BREAK BECAUSE OF THE RAW BLOB PARSE FUNCTIONALITY", ->
-      expect(true).toBe(false)
-    )
-
     describe("save()", ->
 
       it("should make POST if isNew", ->
@@ -403,7 +400,7 @@ describe("GitLab", ->
       )
   
       it("should use branch and commit message", ->
-        spyOnAjax() 
+        spyOnAjax()
         slaveBlob.set("content", "New Content")
         slaveBlob.save(
           commit_message: "BLABLA"
@@ -415,6 +412,42 @@ describe("GitLab", ->
         expect(lastAjaxCallData().commit_message).toEqual("BLABLA")
         expect(lastAjaxCallData().branch_name).toEqual("slave")
       )
+    )
+
+    describe("destroy()", ->
+
+    )
+
+    describe("parse()", ->
+
+      it("should parse object response from /files", ->
+        loaded = false
+        spyOnAjax()
+        masterBlob.set("content", "Goodbye!")
+        masterBlob.save({}, success: -> loaded = true)
+        waitsFor(->
+          return loaded
+        , "blob was never created", ajaxTimeout
+        )
+        runs(->
+          expect(masterBlob.get("content")).toEqual("Goodbye!")
+        )
+      )
+
+      it("should parse string response from /blobs", ->
+        loaded = false
+        spyOnAjax()
+        masterBlob.set("content", "Goodbye!")
+        masterBlob.fetchContent(success: -> loaded = true)
+        waitsFor(->
+          return loaded
+        , "blob content never loaded", ajaxTimeout
+        )
+        runs(->
+          expect(masterBlob.get("content")).toEqual("Hello!")
+        )
+      )
+
     )
   ) 
 )

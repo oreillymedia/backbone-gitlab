@@ -103,6 +103,42 @@ GitLab.Members = GitLab.Collection.extend(
   model: GitLab.Member
 )
 
+# Tree
+# --------------------------------------------------------
+
+GitLab.Tree = GitLab.Collection.extend(
+  
+  backboneClass: "Tree"
+  model: GitLab.Blob
+  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree"
+  
+  initialize: (models, options) ->
+    options = options || {}
+    if !options.project then throw "You have to initialize GitLab.Tree with a GitLab.Project model"
+    @project = options.project
+    @path = options.path
+    @branch = options.branch || "master"
+    @trees = []
+
+  fetch: (options) ->
+    options = options || {}
+    options.data = path: @path
+    options.data.ref_name = @branch
+    GitLab.Collection.prototype.fetch.apply(this, [options])
+  
+  parse: (resp, xhr) ->
+    
+    # add trees to trees. we're loosing the tree data but the path here.
+    _(resp).filter((obj) =>
+      obj.type == "tree"
+    ).map((obj) => @trees.push(@project.tree(obj.name, @branch)))
+
+    # add blobs to models. we're loosing the blob data but the path here.
+    _(resp).filter((obj) =>
+      obj.type == "blob"
+    ).map((obj) => @project.blob(obj.name, @branch))
+)
+
 # Blob
 # --------------------------------------------------------
 
@@ -145,43 +181,12 @@ GitLab.Blob = GitLab.Model.extend(
     )
 
   parse: (response, options) ->
-    content: response
-)
-
-# Tree
-# --------------------------------------------------------
-
-GitLab.Tree = GitLab.Collection.extend(
-  
-  backboneClass: "Tree"
-  model: GitLab.Blob
-  url: -> "#{GitLab.url}/projects/#{@project.escaped_path()}/repository/tree"
-  
-  initialize: (models, options) ->
-    options = options || {}
-    if !options.project then throw "You have to initialize GitLab.Tree with a GitLab.Project model"
-    @project = options.project
-    @path = options.path
-    @branch = options.branch || "master"
-    @trees = []
-
-  fetch: (options) ->
-    options = options || {}
-    options.data = path: @path
-    options.data.ref_name = @branch
-    GitLab.Collection.prototype.fetch.apply(this, [options])
-  
-  parse: (resp, xhr) ->
-    
-    # add trees to trees. we're loosing the tree data but the path here.
-    _(resp).filter((obj) =>
-      obj.type == "tree"
-    ).map((obj) => @trees.push(@project.tree(obj.name, @branch)))
-
-    # add blobs to models. we're loosing the blob data but the path here.
-    _(resp).filter((obj) =>
-      obj.type == "blob"
-    ).map((obj) => @project.blob(obj.name, @branch))
+    # if response is blob content from /blobs
+    if _.isString(response)
+      content: response
+    # if response is blob data from create/update
+    else
+      response
 )
 
 # Client

@@ -118,6 +118,45 @@
     model: GitLab.Member
   });
 
+  GitLab.Tree = GitLab.Collection.extend({
+    backboneClass: "Tree",
+    model: GitLab.Blob,
+    url: function() {
+      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree";
+    },
+    initialize: function(models, options) {
+      options = options || {};
+      if (!options.project) {
+        throw "You have to initialize GitLab.Tree with a GitLab.Project model";
+      }
+      this.project = options.project;
+      this.path = options.path;
+      this.branch = options.branch || "master";
+      return this.trees = [];
+    },
+    fetch: function(options) {
+      options = options || {};
+      options.data = {
+        path: this.path
+      };
+      options.data.ref_name = this.branch;
+      return GitLab.Collection.prototype.fetch.apply(this, [options]);
+    },
+    parse: function(resp, xhr) {
+      var _this = this;
+      _(resp).filter(function(obj) {
+        return obj.type === "tree";
+      }).map(function(obj) {
+        return _this.trees.push(_this.project.tree(obj.name, _this.branch));
+      });
+      return _(resp).filter(function(obj) {
+        return obj.type === "blob";
+      }).map(function(obj) {
+        return _this.project.blob(obj.name, _this.branch);
+      });
+    }
+  });
+
   GitLab.Blob = GitLab.Model.extend({
     backboneClass: "Blob",
     initialize: function(data, options) {
@@ -160,48 +199,13 @@
       }, options));
     },
     parse: function(response, options) {
-      return {
-        content: response
-      };
-    }
-  });
-
-  GitLab.Tree = GitLab.Collection.extend({
-    backboneClass: "Tree",
-    model: GitLab.Blob,
-    url: function() {
-      return "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository/tree";
-    },
-    initialize: function(models, options) {
-      options = options || {};
-      if (!options.project) {
-        throw "You have to initialize GitLab.Tree with a GitLab.Project model";
+      if (_.isString(response)) {
+        return {
+          content: response
+        };
+      } else {
+        return response;
       }
-      this.project = options.project;
-      this.path = options.path;
-      this.branch = options.branch || "master";
-      return this.trees = [];
-    },
-    fetch: function(options) {
-      options = options || {};
-      options.data = {
-        path: this.path
-      };
-      options.data.ref_name = this.branch;
-      return GitLab.Collection.prototype.fetch.apply(this, [options]);
-    },
-    parse: function(resp, xhr) {
-      var _this = this;
-      _(resp).filter(function(obj) {
-        return obj.type === "tree";
-      }).map(function(obj) {
-        return _this.trees.push(_this.project.tree(obj.name, _this.branch));
-      });
-      return _(resp).filter(function(obj) {
-        return obj.type === "blob";
-      }).map(function(obj) {
-        return _this.project.blob(obj.name, _this.branch);
-      });
     }
   });
 
