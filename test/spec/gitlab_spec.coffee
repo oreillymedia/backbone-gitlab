@@ -23,12 +23,22 @@
 #
 
 # TODO
-# PARSE blob.name into file_path ALWAYS
-# remove all ? from URLs and add to data
-# MAKE SURE THAT ALL ASSOCIATIONS HAVE MINIMUM OF DATA TO DO STUFF
-# CHECK THAT ALL MODELS THAT REWUIRE BRANCHES FAIL WHEN NOT PASSED IN
-# make sure that the trees api returns full path in blob names when listing a subfolder. Otherwise blob.get("name") logic is wrong.
-# MAKE SURE ALL THE ?file_path is in data instead!!!
+
+# /tree subfolders don't return full path to file in "name". Smart parse when 1) coming from tree (pass in file_path) 2) Created from beginning (pass in file_path). Then parse that into "name" without path
+
+# enable tree.create(blobData) instead of just project.blob(path).save()
+
+# path should be set inside project, not in gitlab.client
+#expect(project.get("path")).toEqual("book")
+#expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
+#expect(project.id).toBe(undefined)
+
+
+# Things to tweak in GitLab API
+#
+# /blobs has "filepath" parameter, but /files has "file_path". /tree param is "path". Make them the same.
+# /tree returns blobs with "name" parameter, which is "file_path" in /files
+# Many resources live as ?params, not as objects in the URL. Filenames, etc should be resources in the route
 
 ajaxTimeout = 1000
 token = "abcdefg"
@@ -75,7 +85,6 @@ describe("GitLab", ->
       )
       it("returns empty GitLab.Project model on gitlab.project(full_path)", ->
         expect(project2.backboneClass).toEqual("Project")
-        # CHECK THAT THE full_name IS SET TO CORRECT VARS
       )
     )
   )
@@ -147,12 +156,6 @@ describe("GitLab", ->
       )
     )
 
-    # should set "book" and "runemadsen" individually
-    # CHECK THAT PATH GETS SET INSIDE PROJECT MODEL, NOT FROM GITLAB.project() 
-    #expect(project.get("path")).toEqual("book")
-    #expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
-    #expect(project.id).toBe(undefined)
-
     describe("Associations", ->
       
       it("returns empty GitLab.Branches collection on project.branches", ->
@@ -170,7 +173,8 @@ describe("GitLab", ->
         blob = project.blob("subfolder/file.txt")
         expect(blob.backboneClass).toEqual("Blob")
         expect(blob.project).toEqual(project)
-        expect(blob.get("name")).toEqual("subfolder/file.txt")
+        expect(blob.get("name")).toEqual("file.txt")
+        expect(blob.get("file_path")).toEqual("subfolder/file.txt")
       )
   
       it("returns empty GitLab.Blob model on project.blob(path, branch)", ->
@@ -178,7 +182,8 @@ describe("GitLab", ->
         expect(blob.backboneClass).toEqual("Blob")
         expect(blob.project).toEqual(project)
         expect(blob.branch).toEqual("slave")
-        expect(blob.get("name")).toEqual("subfolder/file.txt")
+        expect(blob.get("name")).toEqual("file.txt")
+        expect(blob.get("file_path")).toEqual("subfolder/file.txt")
       )
   
       it("returns empty GitLab.Tree model on project.tree(path)", ->
@@ -259,24 +264,36 @@ describe("GitLab", ->
   describe("Tree", ->
 
     describe("initialize()", ->
-      it("should complain if no project, path are passed in options", ->
+      it("should complain if no project is passed in options", ->
         expect(-> new GitLab.Tree()).toThrow(new Error("You have to initialize GitLab.Tree with a GitLab.Project model"));
       )
     )
 
     describe("fetch()", ->
 
-      it("should call correct URL", ->
+      it("should call correct URL without a path", ->
         spyOnAjax()
         tree = new GitLab.Tree([]
         , 
           project:project
-          path:"/"
         )
         tree.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/tree")
-        expect(lastAjaxCallData().path).toEqual("/")
+        expect(lastAjaxCallData().path).toBe(undefined)
+      )
+
+      it("should call correct URL with a path", ->
+        spyOnAjax()
+        tree = new GitLab.Tree([]
+        , 
+          project:project
+          path:"subfolder/subsubfolder"
+        )
+        tree.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/tree")
+        expect(lastAjaxCallData().path).toEqual("subfolder/subsubfolder")
       )
 
       it("should call correct URL with branch and subfolder path", ->
@@ -293,7 +310,7 @@ describe("GitLab", ->
       )
 
       it("should parse trees and blobs", ->
-        tree = new GitLab.Tree([], project:project, path:"/")
+        tree = new GitLab.Tree([], project:project)
         tree.fetch()
         waitsFor(->
           return tree.length > 0
@@ -304,6 +321,8 @@ describe("GitLab", ->
           expect(tree.length).toBe(1)
           blob = tree.first()
           expect(blob.backboneClass).toEqual("Blob")
+          expect(blob.get("file_path")).toEqual("README.md")
+          expect(blob.get("name")).toEqual("README.md")
           
           # put trees in trees array
           expect(tree.trees.length).toBe(1)
@@ -311,6 +330,20 @@ describe("GitLab", ->
           expect(subfolder.backboneClass).toEqual("Tree")
           expect(subfolder.path).toEqual("assets")
           expect(subfolder.length).toBe(0)
+        )
+      )
+
+      it("should give blobs in subfolders the correct file_path", ->
+        tree = new GitLab.Tree([], project:project, path:"subfolder")
+        tree.fetch()
+        waitsFor(->
+          return tree.length > 0
+        , "tree never loaded", ajaxTimeout
+        )
+        runs(->
+          blob = tree.first()
+          expect(blob.get("name")).toEqual("SUBME.md")
+          expect(blob.get("file_path")).toEqual("subfolder/SUBME.md")
         )
       )
     )
@@ -326,16 +359,27 @@ describe("GitLab", ->
 
     beforeEach(->
       masterBlob = new GitLab.Blob(
-        name: "subfolder/master.txt"
+        file_path: "subfolder/master.txt"
       ,
         project: project
       )
       slaveBlob = new GitLab.Blob(
-        name: "subfolder/slave.txt"
+        file_path: "subfolder/slave.txt"
       ,
         project: project
         branch: "slave"
       )
+    )
+
+    it("should parse file_path attribute into name on initialize", ->
+      expect(masterBlob.get("name")).toEqual("master.txt")
+      expect(masterBlob.get("file_path")).toEqual("subfolder/master.txt")
+    )
+
+    it("should parse file_path attribute into name on change", ->
+      masterBlob.set("file_path", "anotherfolder/another.txt")
+      expect(masterBlob.get("name")).toEqual("another.txt")
+      expect(masterBlob.get("file_path")).toEqual("anotherfolder/another.txt")
     )
 
     it("should fail if correct options are not given", ->
@@ -352,16 +396,18 @@ describe("GitLab", ->
         , "blob content never loaded", ajaxTimeout
         )
         runs(->
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master?filepath=subfolder/master.txt")
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master")
+          expect(lastAjaxCallData().filepath).toEqual("subfolder/master.txt")
           expect(masterBlob.get("content")).toEqual("Hello!")
-          expect(masterBlob.get("name")).toEqual("subfolder/master.txt")
+          expect(masterBlob.get("name")).toEqual("master.txt")
+          expect(masterBlob.get("file_path")).toEqual("subfolder/master.txt")
         )
       )
   
       it("should use branch if specified", ->
         spyOnAjax()
         slaveBlob.fetchContent()
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave?filepath=subfolder/slave.txt")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave")
       )
     )
 
@@ -392,11 +438,24 @@ describe("GitLab", ->
       )
 
       it("should make PUT if not isNew", ->
-        # WHAT DETERMINES WHETHER THE BLOB IS NEW OR NOT?
-        # get blob
-        # fetchContent
-        # save
-        # make sure it's a PUT
+        loaded = false
+        spyOnAjax() 
+        masterBlob.set("content", "New Content")
+        masterBlob.save({}, success: -> loaded = true)
+        waitsFor(->
+          return loaded
+        , "blob was never created", ajaxTimeout
+        )
+        runs(->
+          masterBlob.set("content", "Updated Content")
+          masterBlob.save()
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+          expect(lastAjaxCall().args[0].type).toEqual("PUT")
+          expect(lastAjaxCallData().file_path).toEqual("subfolder/master.txt")
+          expect(lastAjaxCallData().content).toEqual("Updated Content")
+          expect(lastAjaxCallData().commit_message).toEqual("Updated subfolder/master.txt")
+          expect(lastAjaxCallData().branch_name).toEqual("master")
+        )
       )
   
       it("should use branch and commit message", ->

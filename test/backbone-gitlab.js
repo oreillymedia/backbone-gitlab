@@ -69,7 +69,7 @@
     },
     blob: function(path, branch) {
       return new GitLab.Blob({
-        name: path
+        file_path: path
       }, {
         branch: branch,
         project: this
@@ -136,9 +136,10 @@
     },
     fetch: function(options) {
       options = options || {};
-      options.data = {
-        path: this.path
-      };
+      options.data = options.data || {};
+      if (this.path) {
+        options.data.path = this.path;
+      }
       options.data.ref_name = this.branch;
       return GitLab.Collection.prototype.fetch.apply(this, [options]);
     },
@@ -152,7 +153,13 @@
       return _(resp).filter(function(obj) {
         return obj.type === "blob";
       }).map(function(obj) {
-        return _this.project.blob(obj.name, _this.branch);
+        var full_path;
+        full_path = [];
+        if (_this.path) {
+          full_path.push(_this.path);
+        }
+        full_path.push(obj.name);
+        return _this.project.blob(full_path.join("/"), _this.branch);
       });
     }
   });
@@ -165,14 +172,24 @@
         throw "You have to initialize GitLab.Blob with a GitLab.Project model";
       }
       this.project = options.project;
-      return this.branch = options.branch || "master";
+      this.branch = options.branch || "master";
+      this.on("sync", function() {
+        return this.set("id", "fakeIDtoenablePUT");
+      });
+      this.on("change", this.parseFilePath);
+      return this.parseFilePath();
+    },
+    parseFilePath: function(model, options) {
+      if (this.get("file_path")) {
+        return this.set("name", _.last(this.get("file_path").split("/")));
+      }
     },
     sync: function(method, model, options) {
       var baseURL;
       options = options || {};
       baseURL = "" + GitLab.url + "/projects/" + (this.project.escaped_path()) + "/repository";
       if (method.toLowerCase() === "read") {
-        options.url = "" + baseURL + "/blobs/" + this.branch + "?filepath=" + (this.get("name"));
+        options.url = "" + baseURL + "/blobs/" + this.branch;
       } else {
         options.url = "" + baseURL + "/files";
       }
@@ -180,7 +197,7 @@
     },
     toJSON: function() {
       return {
-        file_path: this.get("name"),
+        file_path: this.get("file_path"),
         branch_name: this.branch,
         content: this.get("content"),
         commit_message: this.get("commit_message") || this.defaultCommitMessage()
@@ -188,14 +205,17 @@
     },
     defaultCommitMessage: function() {
       if (this.isNew()) {
-        return "Created " + (this.get("name"));
+        return "Created " + (this.get("file_path"));
       } else {
-        return "Updated " + (this.get("name"));
+        return "Updated " + (this.get("file_path"));
       }
     },
     fetchContent: function(options) {
       return this.fetch(_.extend({
-        dataType: "html"
+        dataType: "html",
+        data: {
+          filepath: this.get("file_path")
+        }
       }, options));
     },
     parse: function(response, options) {

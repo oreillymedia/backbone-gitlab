@@ -41,7 +41,7 @@ GitLab.SSHKeys = GitLab.Collection.extend(
   model: GitLab.SSHKey
 )
 
-# Projects
+# Project
 # --------------------------------------------------------
 
 GitLab.Project = GitLab.Model.extend(
@@ -58,7 +58,7 @@ GitLab.Project = GitLab.Model.extend(
     )
   blob: (path, branch) ->
     return new GitLab.Blob(
-      name: path
+      file_path: path
     ,
       branch: branch
       project:@
@@ -122,7 +122,8 @@ GitLab.Tree = GitLab.Collection.extend(
 
   fetch: (options) ->
     options = options || {}
-    options.data = path: @path
+    options.data = options.data || {}
+    options.data.path = @path if @path
     options.data.ref_name = @branch
     GitLab.Collection.prototype.fetch.apply(this, [options])
   
@@ -136,7 +137,12 @@ GitLab.Tree = GitLab.Collection.extend(
     # add blobs to models. we're loosing the blob data but the path here.
     _(resp).filter((obj) =>
       obj.type == "blob"
-    ).map((obj) => @project.blob(obj.name, @branch))
+    ).map((obj) => 
+      full_path = []
+      full_path.push @path if @path
+      full_path.push obj.name
+      @project.blob(full_path.join("/"), @branch)
+    )
 )
 
 # Blob
@@ -151,19 +157,26 @@ GitLab.Blob = GitLab.Model.extend(
     if !options.project then throw "You have to initialize GitLab.Blob with a GitLab.Project model"
     @project = options.project
     @branch = options.branch || "master"
+    @on("sync", -> @set("id", "fakeIDtoenablePUT"))
+    @on("change", @parseFilePath)
+    @parseFilePath()
+
+  parseFilePath: (model, options) ->
+    if @get("file_path")
+      @set("name", _.last(@get("file_path").split("/")))
 
   sync: (method, model, options) ->
     options = options || {}
     baseURL = "#{GitLab.url}/projects/#{@project.escaped_path()}/repository"
     if method.toLowerCase() == "read"
-      options.url = "#{baseURL}/blobs/#{@branch}?filepath=#{@get("name")}"
+      options.url = "#{baseURL}/blobs/#{@branch}"
     else
       options.url = "#{baseURL}/files"
     GitLab.sync.apply(this, arguments)
 
   toJSON: ->
     {
-      file_path: @get("name")
+      file_path: @get("file_path")
       branch_name: @branch
       content: @get("content")
       commit_message: @get("commit_message") || @defaultCommitMessage()
@@ -171,20 +184,23 @@ GitLab.Blob = GitLab.Model.extend(
   
   defaultCommitMessage: ->
     if @isNew()
-      "Created #{@get("name")}"
+      "Created #{@get("file_path")}"
     else
-      "Updated #{@get("name")}"
+      "Updated #{@get("file_path")}"
   
   fetchContent: (options) ->
     @fetch(
-      _.extend(dataType:"html", options)
+      _.extend(
+        dataType:"html"
+        data: filepath: @get("file_path")
+      , options)
     )
 
   parse: (response, options) ->
     # if response is blob content from /blobs
     if _.isString(response)
       content: response
-    # if response is blob data from create/update
+    # if response is blob object from /files
     else
       response
 )
