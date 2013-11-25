@@ -146,6 +146,15 @@ describe("GitLab", ->
 
   describe("Project", ->
 
+    describe("initialize()", ->
+      it("should parse path_with_namespace into path and owner", ->
+        project = gitlab.project("runemadsen/book")
+        expect(project.get("owner").username).toEqual("runemadsen")
+        expect(project.get("path")).toEqual("book")
+        expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
+      )
+    )
+
     describe("fetch()", ->
       it("should call the correct URL", ->
         spyOnAjax()

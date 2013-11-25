@@ -56,9 +56,11 @@
       this.branches = new GitLab.Branches([], {
         project: this
       });
-      return this.members = new GitLab.Members([], {
+      this.members = new GitLab.Members([], {
         project: this
       });
+      this.on("change", this.parsePath);
+      return this.parse_path();
     },
     tree: function(path, branch) {
       return new GitLab.Tree([], {
@@ -74,6 +76,16 @@
         branch: branch,
         project: this
       });
+    },
+    parse_path: function() {
+      var split;
+      if (this.get("path_with_namespace")) {
+        split = this.get("path_with_namespace").split("/");
+        this.set("path", _.last(split));
+        return this.set("owner", {
+          username: _.first(split)
+        });
+      }
     },
     escaped_path: function() {
       return this.get("path_with_namespace").replace("/", "%2F");

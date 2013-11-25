@@ -50,6 +50,8 @@ GitLab.Project = GitLab.Model.extend(
   initialize: ->
     @branches = new GitLab.Branches([], project:@)
     @members = new GitLab.Members([], project:@)
+    @on("change", @parsePath)
+    @parse_path()
   tree: (path, branch) ->
     return new GitLab.Tree([], 
       project:@
@@ -63,6 +65,11 @@ GitLab.Project = GitLab.Model.extend(
       branch: branch
       project:@
     )
+  parse_path: ->
+    if @get("path_with_namespace")
+      split = @get("path_with_namespace").split("/")
+      @set("path", _.last(split))
+      @set("owner", { username: _.first(split) })
   escaped_path: ->
     return @get("path_with_namespace").replace("/", "%2F")
 )
