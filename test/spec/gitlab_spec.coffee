@@ -21,19 +21,6 @@
 # The AJAX helpers can of course be mixes with Jasmine's asynchronous helpers, as seen in the tests
 # below.
 #
-
-# TODO
-
-# /tree subfolders don't return full path to file in "name". Smart parse when 1) coming from tree (pass in file_path) 2) Created from beginning (pass in file_path). Then parse that into "name" without path
-
-# enable tree.create(blobData) instead of just project.blob(path).save()
-
-# path should be set inside project, not in gitlab.client
-#expect(project.get("path")).toEqual("book")
-#expect(project.get("path_with_namespace")).toEqual("runemadsen/book")
-#expect(project.id).toBe(undefined)
-
-
 # Things to tweak in GitLab API
 #
 # /blobs has "filepath" parameter, but /files has "file_path". /tree param is "path". Make them the same.
@@ -51,8 +38,7 @@ describe("GitLab", ->
   project2 = null
 
   beforeEach(->
-    GitLab.url = url
-    gitlab = new GitLab.Client(token)
+    gitlab = new GitLab(url, token)
     project = gitlab.project("owner/project")
     project2 = gitlab.project("runemadsen/book")
   )
@@ -102,8 +88,9 @@ describe("GitLab", ->
 
   describe("Client", ->
 
-    it("should initialize with token", ->
+    it("should initialize with token and url", ->
       expect(gitlab.token).toBe(token)
+      expect(gitlab.url).toBe(url)
     )
 
     describe("Associations", ->
@@ -147,7 +134,7 @@ describe("GitLab", ->
 
     keys = null
     beforeEach(-> 
-      keys = new GitLab.SSHKeys()
+      keys = new gitlab.SSHKeys()
     )
 
     describe("fetch()", ->
@@ -244,11 +231,11 @@ describe("GitLab", ->
   describe("Branches", ->
 
     branches = null
-    beforeEach(-> branches = new GitLab.Branches([], project:project))
+    beforeEach(-> branches = new gitlab.Branches([], project:project))
 
     describe("initialize()", ->
       it("should complain if no project is passed in options", ->
-        expect(-> new GitLab.Branches()).toThrow(new Error("You have to initialize GitLab.Branches with a GitLab.Project model"));
+        expect(-> new gitlab.Branches()).toThrow(new Error("You have to initialize GitLab.Branches with a GitLab.Project model"));
       )
     )
 
@@ -268,11 +255,11 @@ describe("GitLab", ->
   describe("Members", ->
 
     members = null
-    beforeEach(-> members = new GitLab.Members([], project:project))
+    beforeEach(-> members = new gitlab.Members([], project:project))
 
     describe("initialize()", ->
       it("should complain no project is passed in options", ->
-        expect(-> new GitLab.Members()).toThrow(new Error("You have to initialize GitLab.Members with a GitLab.Project model"));
+        expect(-> new gitlab.Members()).toThrow(new Error("You have to initialize GitLab.Members with a GitLab.Project model"));
       )
     )
 
@@ -302,7 +289,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain if no project is passed in options", ->
-        expect(-> new GitLab.Tree()).toThrow(new Error("You have to initialize GitLab.Tree with a GitLab.Project model"));
+        expect(-> new gitlab.Tree()).toThrow(new Error("You have to initialize GitLab.Tree with a GitLab.Project model"));
       )
     )
 
@@ -310,7 +297,7 @@ describe("GitLab", ->
 
       it("should call correct URL without a path", ->
         spyOnAjax()
-        tree = new GitLab.Tree([]
+        tree = new gitlab.Tree([]
         , 
           project:project
         )
@@ -322,7 +309,7 @@ describe("GitLab", ->
 
       it("should call correct URL with a path", ->
         spyOnAjax()
-        tree = new GitLab.Tree([]
+        tree = new gitlab.Tree([]
         , 
           project:project
           path:"subfolder/subsubfolder"
@@ -335,7 +322,7 @@ describe("GitLab", ->
 
       it("should call correct URL with branch and subfolder path", ->
         spyOnAjax()
-        tree = new GitLab.Tree([]
+        tree = new gitlab.Tree([]
         , 
           project:project
           path:"subfolder"
@@ -347,7 +334,7 @@ describe("GitLab", ->
       )
 
       it("should parse trees and blobs", ->
-        tree = new GitLab.Tree([], project:project)
+        tree = new gitlab.Tree([], project:project)
         tree.fetch()
         waitsFor(->
           return tree.length > 0
@@ -371,7 +358,7 @@ describe("GitLab", ->
       )
 
       it("should give blobs in subfolders the correct file_path", ->
-        tree = new GitLab.Tree([], project:project, path:"subfolder")
+        tree = new gitlab.Tree([], project:project, path:"subfolder")
         tree.fetch()
         waitsFor(->
           return tree.length > 0
@@ -395,12 +382,12 @@ describe("GitLab", ->
     slaveBlob = null
 
     beforeEach(->
-      masterBlob = new GitLab.Blob(
+      masterBlob = new gitlab.Blob(
         file_path: "subfolder/master.txt"
       ,
         project: project
       )
-      slaveBlob = new GitLab.Blob(
+      slaveBlob = new gitlab.Blob(
         file_path: "subfolder/slave.txt"
       ,
         project: project
@@ -420,7 +407,7 @@ describe("GitLab", ->
     )
 
     it("should fail if correct options are not given", ->
-      expect(-> new GitLab.Blob()).toThrow(new Error("You have to initialize GitLab.Blob with a GitLab.Project model"))
+      expect(-> new gitlab.Blob()).toThrow(new Error("You have to initialize GitLab.Blob with a GitLab.Project model"))
     )
 
     describe("fetchContent()", ->
