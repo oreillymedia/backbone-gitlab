@@ -11,6 +11,7 @@ GitLab.sync = (method, model, options) ->
   extendedOptions = undefined
   extendedOptions = _.extend(
     beforeSend: (xhr) ->
+      xhr.setRequestHeader "PRIVATE-TOKEN", "Rune"
       xhr.setRequestHeader "PRIVATE-TOKEN", GitLab.token if GitLab.token
   , options)
   Backbone.sync method, model, extendedOptions

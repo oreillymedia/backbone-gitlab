@@ -9,6 +9,7 @@
     extendedOptions = void 0;
     extendedOptions = _.extend({
       beforeSend: function(xhr) {
+        xhr.setRequestHeader("PRIVATE-TOKEN", "Rune");
         if (GitLab.token) {
           return xhr.setRequestHeader("PRIVATE-TOKEN", GitLab.token);
         }

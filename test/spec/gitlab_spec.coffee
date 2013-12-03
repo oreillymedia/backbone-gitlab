@@ -57,6 +57,33 @@ describe("GitLab", ->
     project2 = gitlab.project("runemadsen/book")
   )
 
+  # Custom Matchers
+  # ----------------------------------------------------------------
+
+  beforeEach(->
+    @addMatchers toHaveHeader: (name, value) ->
+      fakeXHR = 
+        actualName: null
+        actualValue: null
+        setRequestHeader: (actualName, actualValue) ->
+          @actualName = actualName
+          @actualValue = actualValue
+      @actual().args[0].beforeSend(fakeXHR)
+      
+      if !fakeXHR.actualName
+        failMessage = "Header #{name} was not in the request"
+      else if fakeXHR.actualName != name
+        failMessage = "Wrong headder intercepted. This matcher needs to be rewritten to use for multiple beforeSend headers"
+      else if fakeXHR.actualName == name && fakeXHR.actualValue != value
+        failMessage = "Header #{name} has value #{fakeXHR.actualValue} instead of #{value}"
+      else
+        failMessage = "No errors"
+      
+      @message = -> failMessage
+    
+      fakeXHR.actualName == name && fakeXHR.actualValue == value
+  )
+
   # Helpers
   # ----------------------------------------------------------------
 
@@ -75,7 +102,7 @@ describe("GitLab", ->
 
   describe("Client", ->
 
-    it("saves token", ->
+    it("should initialize with token", ->
       expect(gitlab.token).toBe(token)
     )
 
@@ -100,6 +127,7 @@ describe("GitLab", ->
         gitlab.user.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/user")
+        expect(lastAjaxCall).toHaveHeader("PRIVATE-TOKEN", token)
       )
     )
 
