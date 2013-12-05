@@ -1,9 +1,10 @@
 {
-  "name" : "backbone-gitlab", 
-  "version" : "0.0.1", 
+  "name" : "backbone-gitlab",
+  "version" : "0.0.1",
   "dependencies" : {
     "canned" : "oreillymedia/canned",
     "foreman" : "0.0.25",
+    "connect" : "1.x.x",
     "express" : "3.4.4"
   }
 }
