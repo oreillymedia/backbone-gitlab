@@ -41,7 +41,11 @@ GitLab = (url, token) ->
 
     truncate: ->
       key = @get('key').split(/\s/)
-      @set "truncated_key", "...#{S(key[1]).right(20)} #{key[2]}"
+
+      if typeof key is "object" and key.length is 3
+        @set "truncated_key", "...#{S(key[1]).right(20)} #{key[2]}"
+      else
+        @set "truncated_key", key
       true
 
   )
