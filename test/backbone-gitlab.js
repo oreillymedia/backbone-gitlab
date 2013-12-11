@@ -35,7 +35,23 @@
       }
     });
     this.SSHKey = this.Model.extend({
-      backboneClass: "SSHKey"
+      backboneClass: "SSHKey",
+      initialize: function() {
+        return this.truncate();
+      },
+      truncate: function() {
+        var key, key_part, key_part_length, truncate_length;
+        key = this.get('key').split(/\s/);
+        if (typeof key === "object" && key.length === 3) {
+          key_part = key[1];
+          key_part_length = key_part.length;
+          truncate_length = key_part_length > 20 ? 20 : key_part_length;
+          this.set("truncated_key", "..." + (key_part.substring(key_part_length - truncate_length, key_part_length)) + " " + key[2]);
+        } else {
+          this.set("truncated_key", this.get('key'));
+        }
+        return true;
+      }
     });
     this.SSHKeys = this.Collection.extend({
       backboneClass: "SSHKeys",

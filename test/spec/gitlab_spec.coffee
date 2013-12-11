@@ -2,13 +2,13 @@
 #
 # In these tests, results from the "test/canned" folder will be served as API responses.
 # If you want to check that a specific URL was called, you can use the AJAX helpers:
-# 
+#
 #   spyOnAjax()
 #   model.fetch()
 #   expect(lastAjaxCall().args[0].type).toEqual("GET")
 #   expect(lastAjaxCall().args[0].url).toEqual("www.runemadsen.com/user")
 #
-# Remember that the AJAX calls are actually being made, so to assert something on the response, 
+# Remember that the AJAX calls are actually being made, so to assert something on the response,
 # you have to use Jasmine's asynchronous helpers:
 #
 #   model.fetch()
@@ -48,14 +48,14 @@ describe("GitLab", ->
 
   beforeEach(->
     @addMatchers toHaveHeader: (name, value) ->
-      fakeXHR = 
+      fakeXHR =
         actualName: null
         actualValue: null
         setRequestHeader: (actualName, actualValue) ->
           @actualName = actualName
           @actualValue = actualValue
       @actual().args[0].beforeSend(fakeXHR)
-      
+
       if !fakeXHR.actualName
         failMessage = "Header #{name} was not in the request"
       else if fakeXHR.actualName != name
@@ -64,9 +64,9 @@ describe("GitLab", ->
         failMessage = "Header #{name} has value #{fakeXHR.actualValue} instead of #{value}"
       else
         failMessage = "No errors"
-      
+
       @message = -> failMessage
-    
+
       fakeXHR.actualName == name && fakeXHR.actualValue == value
   )
 
@@ -133,7 +133,7 @@ describe("GitLab", ->
   describe("SSHKeys", ->
 
     keys = null
-    beforeEach(-> 
+    beforeEach(->
       keys = new gitlab.SSHKeys()
     )
 
@@ -152,6 +152,19 @@ describe("GitLab", ->
         keys.create(key:"Something")
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/user/keys")
+      )
+
+      it("should set 'truncated_key' on initialize", ->
+        keys.create(key:"ssh-rsa 1234567890123456789012345678901234567890 emailaddress")
+
+        key = keys.last()
+
+        expect(key.get("truncated_key")).toEqual("...12345678901234567890 emailaddress")
+      )
+
+      it("should set 'truncated_key' as 'key' if there aren't 3 spaces", ->
+        key = keys.create(key:"something")
+        expect(key.get('truncated_key')).toEqual("something")
       )
     )
   )
@@ -176,12 +189,12 @@ describe("GitLab", ->
         project = gitlab.project("runemadsen/book") # load any.get.json instead of subfolder index.get.json
         project.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/runemadsen%2Fbook") 
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/runemadsen%2Fbook")
       )
     )
 
     describe("Associations", ->
-      
+
       it("returns empty GitLab.Branches collection on project.branches", ->
         branches = project.branches
         expect(branches.backboneClass).toEqual("Branches")
@@ -192,7 +205,7 @@ describe("GitLab", ->
       it("returns empty GitLab.Members collection on project.members", ->
         expect(project.members.backboneClass).toEqual("Members")
       )
-  
+
       it("returns empty GitLab.Blob model on project.blob(path)", ->
         blob = project.blob("subfolder/file.txt")
         expect(blob.backboneClass).toEqual("Blob")
@@ -200,7 +213,7 @@ describe("GitLab", ->
         expect(blob.get("name")).toEqual("file.txt")
         expect(blob.get("file_path")).toEqual("subfolder/file.txt")
       )
-  
+
       it("returns empty GitLab.Blob model on project.blob(path, branch)", ->
         blob = project.blob("subfolder/file.txt", "slave")
         expect(blob.backboneClass).toEqual("Blob")
@@ -209,13 +222,13 @@ describe("GitLab", ->
         expect(blob.get("name")).toEqual("file.txt")
         expect(blob.get("file_path")).toEqual("subfolder/file.txt")
       )
-  
+
       it("returns empty GitLab.Tree model on project.tree(path)", ->
         tree = project.tree("/")
         expect(tree.backboneClass).toEqual("Tree")
         expect(tree.project).toEqual(project)
       )
-  
+
       it("returns empty GitLab.Tree model on project.tree(path, branch)", ->
         tree = project.tree("/", "slave")
         expect(tree.backboneClass).toEqual("Tree")
@@ -244,7 +257,7 @@ describe("GitLab", ->
         spyOnAjax()
         branches.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches") 
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches")
       )
     )
   )
@@ -268,7 +281,7 @@ describe("GitLab", ->
         spyOnAjax()
         members.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/members") 
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/members")
       )
     )
 
@@ -298,7 +311,7 @@ describe("GitLab", ->
       it("should call correct URL without a path", ->
         spyOnAjax()
         tree = new gitlab.Tree([]
-        , 
+        ,
           project:project
         )
         tree.fetch()
@@ -310,7 +323,7 @@ describe("GitLab", ->
       it("should call correct URL with a path", ->
         spyOnAjax()
         tree = new gitlab.Tree([]
-        , 
+        ,
           project:project
           path:"subfolder/subsubfolder"
         )
@@ -323,7 +336,7 @@ describe("GitLab", ->
       it("should call correct URL with branch and subfolder path", ->
         spyOnAjax()
         tree = new gitlab.Tree([]
-        , 
+        ,
           project:project
           path:"subfolder"
           branch:"slave"
@@ -347,7 +360,7 @@ describe("GitLab", ->
           expect(blob.backboneClass).toEqual("Blob")
           expect(blob.get("file_path")).toEqual("README.md")
           expect(blob.get("name")).toEqual("README.md")
-          
+
           # put trees in trees array
           expect(tree.trees.length).toBe(1)
           subfolder = tree.trees[0]
@@ -377,7 +390,7 @@ describe("GitLab", ->
   # ----------------------------------------------------------------
 
   describe("Blob", ->
-    
+
     masterBlob = null
     slaveBlob = null
 
@@ -427,7 +440,7 @@ describe("GitLab", ->
           expect(masterBlob.get("file_path")).toEqual("subfolder/master.txt")
         )
       )
-  
+
       it("should use branch if specified", ->
         spyOnAjax()
         slaveBlob.fetchContent()
@@ -450,7 +463,7 @@ describe("GitLab", ->
     describe("save()", ->
 
       it("should make POST if isNew", ->
-        spyOnAjax() 
+        spyOnAjax()
         masterBlob.set("content", "New Content")
         masterBlob.save()
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
@@ -463,7 +476,7 @@ describe("GitLab", ->
 
       it("should make PUT if not isNew", ->
         loaded = false
-        spyOnAjax() 
+        spyOnAjax()
         masterBlob.set("content", "New Content")
         masterBlob.save({}, success: -> loaded = true)
         waitsFor(->
@@ -481,7 +494,7 @@ describe("GitLab", ->
           expect(lastAjaxCallData().branch_name).toEqual("master")
         )
       )
-  
+
       it("should use branch and commit message", ->
         spyOnAjax()
         slaveBlob.set("content", "New Content")
@@ -532,5 +545,5 @@ describe("GitLab", ->
       )
 
     )
-  ) 
+  )
 )

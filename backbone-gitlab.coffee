@@ -39,13 +39,19 @@ GitLab = (url, token) ->
     initialize: ->
       @truncate()
 
+    # Truncate the key but don't attempt to validate, let Gitlab do that.
     truncate: ->
       key = @get('key').split(/\s/)
 
       if typeof key is "object" and key.length is 3
-        @set "truncated_key", "...#{S(key[1]).right(20)} #{key[2]}"
+        key_part = key[1]
+        key_part_length = key_part.length
+
+        truncate_length = if key_part_length > 20 then 20 else key_part_length
+
+        @set "truncated_key", "...#{key_part.substring(key_part_length - truncate_length, key_part_length)} #{key[2]}"
       else
-        @set "truncated_key", key
+        @set "truncated_key", @get('key')
       true
 
   )
