@@ -17,36 +17,54 @@ GitLab = (url, token) ->
         xhr.setRequestHeader "PRIVATE-TOKEN", root.token if root.token
     , options)
     Backbone.sync method, model, extendedOptions
-  
+
   @Model = Backbone.Model.extend(sync: @sync)
   @Collection = Backbone.Collection.extend(sync: @sync)
-  
+
   # Users
   # --------------------------------------------------------
-  
+
   @User = @Model.extend(
     backboneClass: "User"
     url: -> "#{root.url}/user"
     initialize: ->
       @sshkeys = new root.SSHKeys()
   )
-  
+
   # SSH Keys
   # --------------------------------------------------------
-  
+
   @SSHKey = @Model.extend(
-    backboneClass: "SSHKey"
+    backboneClass: "SSHKey",
+    initialize: ->
+      @truncate()
+
+    # Truncate the key but don't attempt to validate, let Gitlab do that.
+    truncate: ->
+      key = @get('key').split(/\s/)
+
+      if typeof key is "object" and key.length is 3
+        key_part = key[1]
+        key_part_length = key_part.length
+
+        truncate_length = if key_part_length > 20 then 20 else key_part_length
+
+        @set "truncated_key", "...#{key_part.substring(key_part_length - truncate_length, key_part_length)} #{key[2]}"
+      else
+        @set "truncated_key", @get('key')
+      true
+
   )
-  
+
   @SSHKeys = @Collection.extend(
     backboneClass: "SSHKeys"
     url: -> "#{root.url}/user/keys"
     model: root.SSHKey
   )
-  
+
   # Project
   # --------------------------------------------------------
-  
+
   @Project = @Model.extend(
     backboneClass: "Project"
     url: -> "#{root.url}/projects/#{@id || @escaped_path()}"
@@ -56,7 +74,7 @@ GitLab = (url, token) ->
       @on("change", @parsePath)
       @parse_path()
     tree: (path, branch) ->
-      return new root.Tree([], 
+      return new root.Tree([],
         project:@
         path: path
         branch: branch
@@ -76,20 +94,20 @@ GitLab = (url, token) ->
     escaped_path: ->
       return @get("path_with_namespace").replace("/", "%2F")
   )
-  
+
   # Branches
   # --------------------------------------------------------
-  
+
   @Branch = @Model.extend(
     backboneClass: "Branch"
   )
-  
+
   @Branches = @Collection.extend(
     backboneClass: "Branches"
     model: root.Branch
-  
+
     url: -> "#{root.url}/projects/#{@project.escaped_path()}/repository/branches"
-    
+
     initialize: (models, options) ->
       options = options || {}
       if !options.project then throw "You have to initialize GitLab.Branches with a GitLab.Project model"
@@ -98,11 +116,11 @@ GitLab = (url, token) ->
 
   # Members
   # --------------------------------------------------------
-  
+
   @Member = @Model.extend(
     backboneClass: "Member"
   )
-  
+
   @Members = @Collection.extend(
     backboneClass: "Members"
     url: -> "#{root.url}/projects/#{@project.escaped_path()}/members"
@@ -115,11 +133,11 @@ GitLab = (url, token) ->
 
   # Blob
   # --------------------------------------------------------
-  
+
   @Blob = @Model.extend(
-    
+
     backboneClass: "Blob"
-  
+
     initialize: (data, options) ->
       options = options || {}
       if !options.project then throw "You have to initialize GitLab.Blob with a GitLab.Project model"
@@ -128,11 +146,11 @@ GitLab = (url, token) ->
       @on("sync", -> @set("id", "fakeIDtoenablePUT"))
       @on("change", @parseFilePath)
       @parseFilePath()
-  
+
     parseFilePath: (model, options) ->
       if @get("file_path")
         @set("name", _.last(@get("file_path").split("/")))
-  
+
     sync: (method, model, options) ->
       options = options || {}
       baseURL = "#{root.url}/projects/#{@project.escaped_path()}/repository"
@@ -141,7 +159,7 @@ GitLab = (url, token) ->
       else
         options.url = "#{baseURL}/files"
       root.sync.apply(this, arguments)
-  
+
     toJSON: ->
       {
         file_path: @get("file_path")
@@ -149,13 +167,13 @@ GitLab = (url, token) ->
         content: @get("content")
         commit_message: @get("commit_message") || @defaultCommitMessage()
       }
-    
+
     defaultCommitMessage: ->
       if @isNew()
         "Created #{@get("file_path")}"
       else
         "Updated #{@get("file_path")}"
-    
+
     fetchContent: (options) ->
       @fetch(
         _.extend(
@@ -163,7 +181,7 @@ GitLab = (url, token) ->
           data: filepath: @get("file_path")
         , options)
       )
-  
+
     parse: (response, options) ->
       # if response is blob content from /blobs
       if _.isString(response)
@@ -175,13 +193,13 @@ GitLab = (url, token) ->
 
   # Tree
   # --------------------------------------------------------
-  
+
   @Tree = @Collection.extend(
-    
+
     backboneClass: "Tree"
     model: root.Blob
     url: -> "#{root.url}/projects/#{@project.escaped_path()}/repository/tree"
-    
+
     initialize: (models, options) ->
       options = options || {}
       if !options.project then throw "You have to initialize GitLab.Tree with a GitLab.Project model"
@@ -189,32 +207,32 @@ GitLab = (url, token) ->
       @path = options.path
       @branch = options.branch || "master"
       @trees = []
-  
+
     fetch: (options) ->
       options = options || {}
       options.data = options.data || {}
       options.data.path = @path if @path
       options.data.ref_name = @branch
       root.Collection.prototype.fetch.apply(this, [options])
-    
+
     parse: (resp, xhr) ->
-      
+
       # add trees to trees. we're loosing the tree data but the path here.
       _(resp).filter((obj) =>
         obj.type == "tree"
       ).map((obj) => @trees.push(@project.tree(obj.name, @branch)))
-  
+
       # add blobs to models. we're loosing the blob data but the path here.
       _(resp).filter((obj) =>
         obj.type == "blob"
-      ).map((obj) => 
+      ).map((obj) =>
         full_path = []
         full_path.push @path if @path
         full_path.push obj.name
         @project.blob(full_path.join("/"), @branch)
       )
   )
-  
+
   # Initialize
   # --------------------------------------------------------
 
@@ -225,7 +243,7 @@ GitLab = (url, token) ->
       path: full_path.split("/")[1]
       path_with_namespace: full_path
     )
-  
+
   return @
 
 window.GitLab = GitLab
