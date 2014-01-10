@@ -39,19 +39,15 @@ GitLab = (url, token) ->
     initialize: ->
       @truncate()
 
-    # Truncate the key but don't attempt to validate, let Gitlab do that.
     truncate: ->
-      key = @get('key').split(/\s/)
+      key = @get('key')
+      key_arr = key.split(/\s/)
 
-      if typeof key is "object" and key.length is 3
-        key_part = key[1]
-        key_part_length = key_part.length
-
-        truncate_length = if key_part_length > 20 then 20 else key_part_length
-
-        @set "truncated_key", "...#{key_part.substring(key_part_length - truncate_length, key_part_length)} #{key[2]}"
+      if typeof key_arr is "object" and key_arr.length is 3
+        truncated_hash = key_arr[1].substr(-20)
+        @set "truncated_key", "...#{truncated_hash} #{key_arr[2]}"
       else
-        @set "truncated_key", @get('key')
+        @set "truncated_key", key
       true
 
   )
@@ -82,6 +78,7 @@ GitLab = (url, token) ->
     blob: (path, branch) ->
       return new root.Blob(
         file_path: path
+        name: _.last path.split("/")
       ,
         branch: branch
         project:@
@@ -93,6 +90,11 @@ GitLab = (url, token) ->
         @set("owner", { username: _.first(split) })
     escaped_path: ->
       return @get("path_with_namespace").replace("/", "%2F")
+  )
+
+  @Projects = @Collection.extend(
+    model: root.Project
+    url: -> "#{root.url}/projects"
   )
 
   # Branches
@@ -158,15 +160,34 @@ GitLab = (url, token) ->
         options.url = "#{baseURL}/blobs/#{@branch}"
       else
         options.url = "#{baseURL}/files"
+
+      # Gitlab Delete requires parameters with DELETE which is not expected
+      # behavoir with Backbone.
+      if method.toLowerCase() is "delete"
+        commit_message = @get('commit_message') || "Deleted #{@get('file_path')}"
+        options.url = options.url + "?file_path=#{@get('file_path')}&branch_name=#{@branch}&commit_message='#{commit_message}'"
+
       root.sync.apply(this, arguments)
 
-    toJSON: ->
-      {
+    toJSON: (opts=[]) ->
+      defaults = {
         file_path: @get("file_path")
         branch_name: @branch
         content: @get("content")
         commit_message: @get("commit_message") || @defaultCommitMessage()
       }
+
+      # exit early if not provided with opts
+      if typeof opts is "Array" and opts.length is 0 then return defaults
+
+      # clone the attributes and add in backboneClass
+      attrs = _.clone(@attributes)
+      attrs.backboneClass = @backboneClass
+
+      _.each opts, (opt) ->
+        if _.has(attrs, opt) then defaults[opt] = attrs[opt]
+
+      defaults
 
     defaultCommitMessage: ->
       if @isNew()
@@ -205,6 +226,7 @@ GitLab = (url, token) ->
       if !options.project then throw "You have to initialize GitLab.Tree with a GitLab.Project model"
       @project = options.project
       @path = options.path
+      @name = options.path
       @branch = options.branch || "master"
       @trees = []
 

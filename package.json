@@ -2,9 +2,12 @@
   "name" : "backbone-gitlab",
   "version" : "0.0.1",
   "devDependencies" : {
-    "canned" : "oreillymedia/canned",
-    "foreman" : "0.0.25",
-    "connect" : "1.x.x",
-    "express" : "3.4.4"
+    "coffee-script": "1.6.3",
+    "canned" : "git://github.com/oreillymedia/canned.git"
+  },
+  "scripts": {
+    "build-js": "coffee -c .",
+    "watch-js": "coffee -w -c .",
+    "test": "open ./test/index.html; node_modules/.bin/canned -p 5000 --headers \"PRIVATE-TOKEN, Content-Type\" ./test/canned; "
   }
 }
