@@ -1,6 +1,10 @@
 {
   "name" : "backbone-gitlab",
   "version" : "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oreillymedia/backbone-gitlab"
+  },
   "devDependencies" : {
     "coffee-script": "1.6.3",
     "canned" : "git://github.com/oreillymedia/canned.git"

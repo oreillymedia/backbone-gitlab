@@ -3,6 +3,8 @@ Backbone for the GitLab API
 
 `backbone-gitlab` is an open-source JavaScript library built on Backbone.js, to be used in browsers to load data via the [GitLab API](http://api.gitlab.org/).
 
+[![NPM](https://nodei.co/npm/backbone-gitlab.png)](https://nodei.co/npm/backbone-gitlab/)
+
 Compiling
 -------
 
