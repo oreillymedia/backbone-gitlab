@@ -40,15 +40,14 @@
         return this.truncate();
       },
       truncate: function() {
-        var key, key_part, key_part_length, truncate_length;
-        key = this.get('key').split(/\s/);
-        if (typeof key === "object" && key.length === 3) {
-          key_part = key[1];
-          key_part_length = key_part.length;
-          truncate_length = key_part_length > 20 ? 20 : key_part_length;
-          this.set("truncated_key", "..." + (key_part.substring(key_part_length - truncate_length, key_part_length)) + " " + key[2]);
+        var key, key_arr, truncated_hash;
+        key = this.get('key');
+        key_arr = key.split(/\s/);
+        if (typeof key_arr === "object" && key_arr.length === 3) {
+          truncated_hash = key_arr[1].substr(-20);
+          this.set("truncated_key", "..." + truncated_hash + " " + key_arr[2]);
         } else {
-          this.set("truncated_key", this.get('key'));
+          this.set("truncated_key", key);
         }
         return true;
       }
@@ -79,12 +78,15 @@
         return new root.Tree([], {
           project: this,
           path: path,
-          branch: branch
+          branch: branch,
+          type: 'tree'
         });
       },
       blob: function(path, branch) {
         return new root.Blob({
-          file_path: path
+          file_path: path,
+          name: _.last(path.split("/")),
+          type: 'blob'
         }, {
           branch: branch,
           project: this
@@ -102,6 +104,12 @@
       },
       escaped_path: function() {
         return this.get("path_with_namespace").replace("/", "%2F");
+      }
+    });
+    this.Projects = this.Collection.extend({
+      model: root.Project,
+      url: function() {
+        return "" + root.url + "/projects";
       }
     });
     this.Branch = this.Model.extend({
@@ -159,7 +167,7 @@
         }
       },
       sync: function(method, model, options) {
-        var baseURL;
+        var baseURL, commit_message;
         options = options || {};
         baseURL = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository";
         if (method.toLowerCase() === "read") {
@@ -167,15 +175,24 @@
         } else {
           options.url = "" + baseURL + "/files";
         }
+        if (method.toLowerCase() === "delete") {
+          commit_message = this.get('commit_message') || ("Deleted " + (this.get('file_path')));
+          options.url = options.url + ("?file_path=" + (this.get('file_path')) + "&branch_name=" + this.branch + "&commit_message='" + commit_message + "'");
+        }
         return root.sync.apply(this, arguments);
       },
-      toJSON: function() {
-        return {
+      toJSON: function(opts) {
+        var defaults;
+        if (opts == null) {
+          opts = {};
+        }
+        defaults = {
           file_path: this.get("file_path"),
           branch_name: this.branch,
           content: this.get("content"),
           commit_message: this.get("commit_message") || this.defaultCommitMessage()
         };
+        return $.extend(true, defaults, opts);
       },
       defaultCommitMessage: function() {
         if (this.isNew()) {
@@ -215,6 +232,7 @@
         }
         this.project = options.project;
         this.path = options.path;
+        this.name = options.path;
         this.branch = options.branch || "master";
         return this.trees = [];
       },
