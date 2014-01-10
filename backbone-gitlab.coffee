@@ -74,13 +74,11 @@ GitLab = (url, token) ->
         project:@
         path: path
         branch: branch
-        type: 'tree'
       )
     blob: (path, branch) ->
       return new root.Blob(
         file_path: path
         name: _.last path.split("/")
-        type: 'blob'
       ,
         branch: branch
         project:@
@@ -171,7 +169,7 @@ GitLab = (url, token) ->
 
       root.sync.apply(this, arguments)
 
-    toJSON: (opts={}) ->
+    toJSON: (opts=[]) ->
       defaults = {
         file_path: @get("file_path")
         branch_name: @branch
@@ -179,8 +177,17 @@ GitLab = (url, token) ->
         commit_message: @get("commit_message") || @defaultCommitMessage()
       }
 
-      # deep extend, just to be safe
-      $.extend(true, defaults, opts)
+      # exit early if not provided with opts
+      if typeof opts is "Array" and opts.length is 0 then return defaults
+
+      # clone the attributes and add in backboneClass
+      attrs = _.clone(@attributes)
+      attrs.backboneClass = @backboneClass
+
+      _.each opts, (opt) ->
+        if _.has(attrs, opt) then defaults[opt] = attrs[opt]
+
+      defaults
 
     defaultCommitMessage: ->
       if @isNew()

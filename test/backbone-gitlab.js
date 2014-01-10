@@ -78,15 +78,13 @@
         return new root.Tree([], {
           project: this,
           path: path,
-          branch: branch,
-          type: 'tree'
+          branch: branch
         });
       },
       blob: function(path, branch) {
         return new root.Blob({
           file_path: path,
-          name: _.last(path.split("/")),
-          type: 'blob'
+          name: _.last(path.split("/"))
         }, {
           branch: branch,
           project: this
@@ -182,9 +180,9 @@
         return root.sync.apply(this, arguments);
       },
       toJSON: function(opts) {
-        var defaults;
+        var attrs, defaults;
         if (opts == null) {
-          opts = {};
+          opts = [];
         }
         defaults = {
           file_path: this.get("file_path"),
@@ -192,7 +190,17 @@
           content: this.get("content"),
           commit_message: this.get("commit_message") || this.defaultCommitMessage()
         };
-        return $.extend(true, defaults, opts);
+        if (typeof opts === "Array" && opts.length === 0) {
+          return defaults;
+        }
+        attrs = _.clone(this.attributes);
+        attrs.backboneClass = this.backboneClass;
+        _.each(opts, function(opt) {
+          if (_.has(attrs, opt)) {
+            return defaults[opt] = attrs[opt];
+          }
+        });
+        return defaults;
       },
       defaultCommitMessage: function() {
         if (this.isNew()) {

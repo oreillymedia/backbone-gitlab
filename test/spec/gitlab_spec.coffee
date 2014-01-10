@@ -238,6 +238,18 @@ describe("GitLab", ->
     )
   )
 
+  # GitLab.Project
+  # ----------------------------------------------------------------
+
+  describe "Projects", ->
+    describe "fetch", ->
+      it "should call the correct URL", ->
+        projects = new gitlab.Projects()
+        spyOnAjax()
+        projects.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects"
+
   # GitLab.Branches
   # ----------------------------------------------------------------
 
@@ -510,9 +522,56 @@ describe("GitLab", ->
       )
     )
 
-    describe("destroy()", ->
+    describe "destroy()", ->
+      beforeEach ->
+        spyOnAjax()
+        masterBlob.set("content", "New Content")
+        masterBlob.save()
 
-    )
+      it "should call a POST method", ->
+        masterBlob.destroy()
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+
+      it "should call the correct URL", ->
+        masterBlob.destroy()
+        expect(lastAjaxCall().args[0].url).toEqual("#{url}/projects/owner%2Fproject/repository/files")
+
+      it "should call the request with `file_path`, `branch_name` and `commit_message` as parameters", ->
+        masterBlob.destroy()
+        parameters = JSON.parse lastAjaxCall().args[0].data
+        expect(parameters["file_path"]).toBeDefined()
+        expect(parameters["branch_name"]).toBeDefined()
+        expect(parameters["commit_message"]).toBeDefined()
+
+      it "should call the `file_path` parameter with the proper value", ->
+        masterBlob.destroy()
+        parameters = JSON.parse lastAjaxCall().args[0].data
+        expect(parameters["file_path"]).toEqual("subfolder/master.txt")
+
+      it "should set `commit_message` when a custom message is provided.", ->
+        masterBlob.set("commit_message", "this file is getting deleted")
+        masterBlob.save()
+        masterBlob.destroy()
+        parameters = JSON.parse lastAjaxCall().args[0].data
+        expect(parameters["commit_message"]).toEqual("this file is getting deleted")
+
+    describe "toJSON()", ->
+      it "should return `file_path`, `branch_name`, `content` and `commit_message` when called with no arguments", ->
+        masterBlob.set "content", "Some file content"
+        json = masterBlob.toJSON()
+        expect(json.file_path).toEqual('subfolder/master.txt')
+        expect(json.branch_name).toEqual('master')
+        expect(json.content).toEqual('Some file content')
+        expect(json.commit_message).toEqual('Created subfolder/master.txt')
+
+      it "should return attributes of Blob as specified by arguments", ->
+        json = masterBlob.toJSON(['name', 'backboneClass'])
+        expect(json.name).toBeDefined()
+        expect(json.backboneClass).toBeDefined()
+
+      it "should not fail when asked for an attribute the Blob does not have", ->
+        json = masterBlob.toJSON(['someObscureKeyOrSomething'])
+        expect(json.someObscureKeyOrSomething).toBeUndefined()
 
     describe("parse()", ->
 
