@@ -6,6 +6,8 @@
     "url": "https://github.com/oreillymedia/backbone-gitlab"
   },
   "devDependencies" : {
+    "underscore":"",
+    "backbone":"",
     "coffee-script": "1.6.3",
     "canned" : "git://github.com/oreillymedia/canned.git"
   },
