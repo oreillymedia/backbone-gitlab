@@ -185,6 +185,7 @@
           opts = [];
         }
         defaults = {
+          name: this.get("name"),
           file_path: this.get("file_path"),
           branch_name: this.branch,
           content: this.get("content"),

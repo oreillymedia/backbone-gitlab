@@ -556,10 +556,12 @@ describe("GitLab", ->
         expect(parameters["commit_message"]).toEqual("this file is getting deleted")
 
     describe "toJSON()", ->
-      it "should return `file_path`, `branch_name`, `content` and `commit_message` when called with no arguments", ->
+      
+      it "should return default attributes when called with no arguments", ->
         masterBlob.set "content", "Some file content"
         json = masterBlob.toJSON()
         expect(json.file_path).toEqual('subfolder/master.txt')
+        expect(json.name).toEqual('master.txt')
         expect(json.branch_name).toEqual('master')
         expect(json.content).toEqual('Some file content')
         expect(json.commit_message).toEqual('Created subfolder/master.txt')

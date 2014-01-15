@@ -171,6 +171,7 @@ GitLab = (url, token) ->
 
     toJSON: (opts=[]) ->
       defaults = {
+        name: @get("name")
         file_path: @get("file_path")
         branch_name: @branch
         content: @get("content")
