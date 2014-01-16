@@ -44,28 +44,37 @@ describe("GitLab", ->
   # Custom Matchers
   # ----------------------------------------------------------------
 
-  beforeEach(->
-    @addMatchers toHaveHeader: (name, value) ->
+  custom_matchers =
+    toSetTokenHeader: (utils, customEqualityTesters) ->
+      # Set actualName and actualValue to null and expect them to be set by backboneGitlab
       fakeXHR =
         actualName: null
         actualValue: null
         setRequestHeader: (actualName, actualValue) ->
           @actualName = actualName
           @actualValue = actualValue
-      @actual().args[0].beforeSend(fakeXHR)
 
-      if !fakeXHR.actualName
-        failMessage = "Header #{name} was not in the request"
-      else if fakeXHR.actualName != name
-        failMessage = "Wrong headder intercepted. This matcher needs to be rewritten to use for multiple beforeSend headers"
-      else if fakeXHR.actualName == name && fakeXHR.actualValue != value
-        failMessage = "Header #{name} has value #{fakeXHR.actualValue} instead of #{value}"
-      else
-        failMessage = "No errors"
+      compare: (actual, expected) ->
+        actual().args[0].beforeSend(fakeXHR)
 
-      @message = -> failMessage
+        result = {}
 
-      fakeXHR.actualName == name && fakeXHR.actualValue == value
+        actualHeader = {}
+        actualHeader[fakeXHR.actualName] = fakeXHR.actualValue
+
+        result.pass = utils.equals(actualHeader, expected, customEqualityTesters)
+
+        if result.pass
+          result.message = "Expected " + JSON.stringify(actualHeader) + " not to be quite so goofy";
+        else
+          result.message = "Expected " + JSON.stringify(actualHeader) + " to be " + JSON.stringify(expected)
+
+        result
+
+
+
+  beforeEach(->
+    jasmine.addMatchers(custom_matchers)
   )
 
   # Helpers
@@ -107,13 +116,15 @@ describe("GitLab", ->
   describe("User", ->
 
     describe("fetch()", ->
-      it("should call correct URL", ->
+      it("should call correct URL", (done) ->
         spyOnAjax()
-        gitlab.user.fetch()
-        expect(lastAjaxCall().args[0].type).toEqual("GET")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/user")
-        console.log token
-        expect(lastAjaxCall).toHaveHeader("PRIVATE-TOKEN")
+        gitlab.user.fetch({
+          success: ->
+            expect(lastAjaxCall().args[0].type).toEqual("GET")
+            expect(lastAjaxCall().args[0].url).toEqual(url + "/user")
+            expect(lastAjaxCall).toSetTokenHeader({"PRIVATE-TOKEN": token})
+            done()
+        })
       )
     )
 
