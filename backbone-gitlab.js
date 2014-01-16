@@ -142,7 +142,35 @@
         }
         return this.project = options.project;
       },
-      model: root.Member
+      model: root.Member,
+      create: function(model, options) {
+        var collection, success;
+        options = options ? _.clone(options) : {};
+        if (!_.has(model, "user_id")) {
+          throw new Error("You must provide a user_id to add a member.");
+        }
+        if (!_.has(model, "access_level")) {
+          throw new Error("You must provide an access_level to add a member.");
+        }
+        if (!(model = this._prepareModel(model, options))) {
+          return false;
+        }
+        if (!options.wait) {
+          this.add(model, options);
+        }
+        collection = this;
+        success = options.success;
+        options.success = function(resp) {
+          if (options.wait) {
+            collection.add(model, options);
+          }
+          if (success) {
+            return success(model, resp, options);
+          }
+        };
+        model.save(null, options);
+        return model;
+      }
     });
     this.Blob = this.Model.extend({
       backboneClass: "Blob",

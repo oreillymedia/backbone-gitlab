@@ -11,12 +11,10 @@
 # Remember that the AJAX calls are actually being made, so to assert something on the response,
 # you have to use Jasmine's asynchronous helpers:
 #
-#   model.fetch()
-#   waitsFor(->
-#     return model.id == 1
-#   , "never loaded", 2000
-#   )
-#   runs(-> console.log "Done!")
+#   model.fetch({success: ->
+#     console.log("DONE!")
+#     done()
+#   })
 #
 # The AJAX helpers can of course be mixes with Jasmine's asynchronous helpers, as seen in the tests
 # below.
@@ -46,41 +44,50 @@ describe("GitLab", ->
   # Custom Matchers
   # ----------------------------------------------------------------
 
-  beforeEach(->
-    @addMatchers toHaveHeader: (name, value) ->
+  custom_matchers =
+    toSetTokenHeader: (utils, customEqualityTesters) ->
+      # Set actualName and actualValue to null and expect them to be set by backboneGitlab
       fakeXHR =
         actualName: null
         actualValue: null
         setRequestHeader: (actualName, actualValue) ->
           @actualName = actualName
           @actualValue = actualValue
-      @actual().args[0].beforeSend(fakeXHR)
 
-      if !fakeXHR.actualName
-        failMessage = "Header #{name} was not in the request"
-      else if fakeXHR.actualName != name
-        failMessage = "Wrong headder intercepted. This matcher needs to be rewritten to use for multiple beforeSend headers"
-      else if fakeXHR.actualName == name && fakeXHR.actualValue != value
-        failMessage = "Header #{name} has value #{fakeXHR.actualValue} instead of #{value}"
-      else
-        failMessage = "No errors"
+      compare: (actual, expected) ->
+        actual().args[0].beforeSend(fakeXHR)
 
-      @message = -> failMessage
+        result = {}
 
-      fakeXHR.actualName == name && fakeXHR.actualValue == value
+        actualHeader = {}
+        actualHeader[fakeXHR.actualName] = fakeXHR.actualValue
+
+        result.pass = utils.equals(actualHeader, expected, customEqualityTesters)
+
+        if result.pass
+          result.message = "Expected " + JSON.stringify(actualHeader) + " not to be quite so goofy";
+        else
+          result.message = "Expected " + JSON.stringify(actualHeader) + " to be " + JSON.stringify(expected)
+
+        result
+
+
+
+  beforeEach(->
+    jasmine.addMatchers(custom_matchers)
   )
 
   # Helpers
   # ----------------------------------------------------------------
 
   spyOnAjax = ->
-    spyOn(Backbone, "ajax").andCallThrough()
+    spyOn(Backbone, "ajax").and.callThrough()
 
   lastAjaxCall = ->
-    Backbone.ajax.mostRecentCall
+    Backbone.ajax.calls.mostRecent()
 
   lastAjaxCallData = ->
-    d = Backbone.ajax.mostRecentCall.args[0].data || {}
+    d = Backbone.ajax.calls.mostRecent().args[0].data || {}
     if _.isString(d) then JSON.parse(d) else d
 
   # GitLab.Client
@@ -109,12 +116,15 @@ describe("GitLab", ->
   describe("User", ->
 
     describe("fetch()", ->
-      it("should call correct URL", ->
+      it("should call correct URL", (done) ->
         spyOnAjax()
-        gitlab.user.fetch()
-        expect(lastAjaxCall().args[0].type).toEqual("GET")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/user")
-        expect(lastAjaxCall).toHaveHeader("PRIVATE-TOKEN", token)
+        gitlab.user.fetch({
+          success: ->
+            expect(lastAjaxCall().args[0].type).toEqual("GET")
+            expect(lastAjaxCall().args[0].url).toEqual(url + "/user")
+            expect(lastAjaxCall).toSetTokenHeader({"PRIVATE-TOKEN": token})
+            done()
+        })
       )
     )
 
@@ -260,7 +270,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain if no project is passed in options", ->
-        expect(-> new gitlab.Branches()).toThrow(new Error("You have to initialize GitLab.Branches with a GitLab.Project model"));
+        expect(-> new gitlab.Branches()).toThrow("You have to initialize GitLab.Branches with a GitLab.Project model");
       )
     )
 
@@ -284,7 +294,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain no project is passed in options", ->
-        expect(-> new gitlab.Members()).toThrow(new Error("You have to initialize GitLab.Members with a GitLab.Project model"));
+        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model");
       )
     )
 
@@ -300,10 +310,30 @@ describe("GitLab", ->
     describe("create()", ->
       it("should call the correct URL", ->
         spyOnAjax()
-        members.create(name:"Rune Madsen")
+        members.create(user_id:1, access_level:40)
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/members")
       )
+
+      it "should return an error is no access_level is provided", ->
+        expect(-> members.create(user_id:1)).toThrow(new Error("You must provide an access_level to add a member."))
+
+      it "should return an error is user_id is not provided", ->
+        expect(-> members.create(access_level:40)).toThrow(new Error("You must provide a user_id to add a member."))
+    )
+
+    describe("destroy()", ->
+      beforeEach(-> members.fetch())
+
+      it "should call the correct URL", ->
+        members.fetch
+          success: ->
+            spyOnAjax()
+            member = members.first()
+            member.destroy()
+            ajaxArgs = lastAjaxCall().args[0]
+            expect(ajaxArgs.type).toEqual("DELETE")
+            expect(ajaxArgs.url).toEqual(url + "/projects/owner%2Fproject/members/1")
     )
   )
 
@@ -314,7 +344,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain if no project is passed in options", ->
-        expect(-> new gitlab.Tree()).toThrow(new Error("You have to initialize GitLab.Tree with a GitLab.Project model"));
+        expect(-> new gitlab.Tree()).toThrow("You have to initialize GitLab.Tree with a GitLab.Project model")
       )
     )
 
@@ -358,42 +388,35 @@ describe("GitLab", ->
         expect(lastAjaxCallData().ref_name).toEqual("slave")
       )
 
-      it("should parse trees and blobs", ->
+      it("should parse trees and blobs", (done) ->
         tree = new gitlab.Tree([], project:project)
-        tree.fetch()
-        waitsFor(->
-          return tree.length > 0
-        , "tree never loaded", ajaxTimeout
-        )
-        runs(->
-          # put blobs in models array
-          expect(tree.length).toBe(1)
-          blob = tree.first()
-          expect(blob.backboneClass).toEqual("Blob")
-          expect(blob.get("file_path")).toEqual("README.md")
-          expect(blob.get("name")).toEqual("README.md")
+        tree.fetch({
+          success: ->
+            # put blobs in models array
+            expect(tree.length).toBe(1)
+            blob = tree.first()
+            expect(blob.backboneClass).toEqual("Blob")
+            expect(blob.get("file_path")).toEqual("README.md")
+            expect(blob.get("name")).toEqual("README.md")
 
-          # put trees in trees array
-          expect(tree.trees.length).toBe(1)
-          subfolder = tree.trees[0]
-          expect(subfolder.backboneClass).toEqual("Tree")
-          expect(subfolder.path).toEqual("assets")
-          expect(subfolder.length).toBe(0)
-        )
+            # put trees in trees array
+            expect(tree.trees.length).toBe(1)
+            subfolder = tree.trees[0]
+            expect(subfolder.backboneClass).toEqual("Tree")
+            expect(subfolder.path).toEqual("assets")
+            expect(subfolder.length).toBe(0)
+            done()
+        })
       )
 
-      it("should give blobs in subfolders the correct file_path", ->
+      it("should give blobs in subfolders the correct file_path", (done) ->
         tree = new gitlab.Tree([], project:project, path:"subfolder")
-        tree.fetch()
-        waitsFor(->
-          return tree.length > 0
-        , "tree never loaded", ajaxTimeout
-        )
-        runs(->
+        tree.fetch({success: ->
           blob = tree.first()
           expect(blob.get("name")).toEqual("SUBME.md")
           expect(blob.get("file_path")).toEqual("subfolder/SUBME.md")
-        )
+          done()
+        })
       )
 
       it("should give trees in subfolders the correct path", ->
@@ -446,25 +469,21 @@ describe("GitLab", ->
     )
 
     it("should fail if correct options are not given", ->
-      expect(-> new gitlab.Blob()).toThrow(new Error("You have to initialize GitLab.Blob with a GitLab.Project model"))
+      expect(-> new gitlab.Blob()).toThrow("You have to initialize GitLab.Blob with a GitLab.Project model")
     )
 
     describe("fetchContent()", ->
 
-      it("should fetch the blob contents and merge with other data", ->
+      it("should fetch the blob contents and merge with other data", (done) ->
         spyOnAjax()
-        masterBlob.fetchContent()
-        waitsFor(->
-          return masterBlob.get("content")
-        , "blob content never loaded", ajaxTimeout
-        )
-        runs(->
+        masterBlob.fetchContent({success: ->
           expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master")
           expect(lastAjaxCallData().filepath).toEqual("subfolder/master.txt")
           expect(masterBlob.get("content")).toEqual("Hello!")
           expect(masterBlob.get("name")).toEqual("master.txt")
           expect(masterBlob.get("file_path")).toEqual("subfolder/master.txt")
-        )
+          done()
+        })
       )
 
       it("should use branch if specified", ->
@@ -500,25 +519,26 @@ describe("GitLab", ->
         expect(lastAjaxCallData().branch_name).toEqual("master")
       )
 
-      it("should make PUT if not isNew", ->
-        loaded = false
+      it("should make PUT if not isNew", (done) ->
         spyOnAjax()
         masterBlob.set("content", "New Content")
-        masterBlob.save({}, success: -> loaded = true)
-        waitsFor(->
-          return loaded
-        , "blob was never created", ajaxTimeout
-        )
-        runs(->
+        masterBlob.save({}, success: (res) ->
+          masterBlob.attributes.id = "fake"
           masterBlob.set("content", "Updated Content")
-          masterBlob.save()
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
-          expect(lastAjaxCall().args[0].type).toEqual("PUT")
-          expect(lastAjaxCallData().file_path).toEqual("subfolder/master.txt")
-          expect(lastAjaxCallData().content).toEqual("Updated Content")
-          expect(lastAjaxCallData().commit_message).toEqual("Updated subfolder/master.txt")
-          expect(lastAjaxCallData().branch_name).toEqual("master")
+
+          masterBlob.save(masterBlob.attributes, success: (updatedBlob) ->
+            expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+            expect(lastAjaxCall().args[0].type).toEqual("PUT")
+            expect(lastAjaxCallData().file_path).toEqual("subfolder/master.txt")
+            expect(lastAjaxCallData().content).toEqual("Updated Content")
+            expect(lastAjaxCallData().commit_message).toEqual("Updated subfolder/master.txt")
+            expect(lastAjaxCallData().branch_name).toEqual("master")
+            done()
+          )
+
         )
+
+
       )
 
       it("should use branch and commit message", ->
@@ -591,32 +611,20 @@ describe("GitLab", ->
 
     describe("parse()", ->
 
-      it("should parse object response from /files", ->
-        loaded = false
+      it("should parse object response from /files", (done) ->
         spyOnAjax()
         masterBlob.set("content", "Goodbye!")
-        masterBlob.save({}, success: -> loaded = true)
-        waitsFor(->
-          return loaded
-        , "blob was never created", ajaxTimeout
-        )
-        runs(->
+        masterBlob.save {}, success: ->
           expect(masterBlob.get("content")).toEqual("Goodbye!")
-        )
+          done()
       )
 
-      it("should parse string response from /blobs", ->
-        loaded = false
+      it("should parse string response from /blobs", (done) ->
         spyOnAjax()
         masterBlob.set("content", "Goodbye!")
-        masterBlob.fetchContent(success: -> loaded = true)
-        waitsFor(->
-          return loaded
-        , "blob content never loaded", ajaxTimeout
-        )
-        runs(->
+        masterBlob.fetchContent success: ->
           expect(masterBlob.get("content")).toEqual("Hello!")
-        )
+          done()
       )
 
     )

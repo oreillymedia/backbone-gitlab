@@ -131,6 +131,24 @@ GitLab = (url, token) ->
       if !options.project then throw "You have to initialize GitLab.Members with a GitLab.Project model"
       @project = options.project
     model: root.Member
+
+    create: (model, options) ->
+      options = if options then _.clone(options) else {}
+
+      if !_.has(model, "user_id")
+        throw new Error "You must provide a user_id to add a member."
+      if !_.has(model, "access_level")
+        throw new Error "You must provide an access_level to add a member."
+
+      if (!(model = this._prepareModel(model, options))) then return false
+      if (!options.wait) then this.add(model, options)
+      collection = this;
+      success = options.success;
+      options.success = (resp) ->
+        if (options.wait) then collection.add(model, options);
+        if (success) then success(model, resp, options);
+      model.save(null, options);
+      return model
   )
 
   # Blob
