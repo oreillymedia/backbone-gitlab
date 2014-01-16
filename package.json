@@ -1,6 +1,6 @@
 {
   "name" : "backbone-gitlab",
-  "version" : "0.0.1",
+  "version" : "0.8.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/oreillymedia/backbone-gitlab"
