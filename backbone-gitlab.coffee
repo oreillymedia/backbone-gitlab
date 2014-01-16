@@ -226,10 +226,12 @@ GitLab = (url, token) ->
       options = options || {}
       if !options.project then throw "You have to initialize GitLab.Tree with a GitLab.Project model"
       @project = options.project
-      @path = options.path
-      @name = options.path
       @branch = options.branch || "master"
       @trees = []
+      
+      if options.path
+        @path = options.path
+        @name = _.last(options.path.split("/"))
 
     fetch: (options) ->
       options = options || {}
@@ -243,7 +245,12 @@ GitLab = (url, token) ->
       # add trees to trees. we're loosing the tree data but the path here.
       _(resp).filter((obj) =>
         obj.type == "tree"
-      ).map((obj) => @trees.push(@project.tree(obj.name, @branch)))
+      ).map((obj) => 
+        full_path = []
+        full_path.push @path if @path
+        full_path.push obj.name
+        @trees.push(@project.tree(full_path.join("/"), @branch))
+      )
 
       # add blobs to models. we're loosing the blob data but the path here.
       _(resp).filter((obj) =>

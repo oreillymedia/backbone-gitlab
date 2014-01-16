@@ -4,5 +4,11 @@
     "type": "blob",
     "mode": "100644",
     "id": "35b2f05cbb4566b71b34554cf184a9d0bd9d46d6"
+  },
+  {
+    "name": "subsubfolder",
+    "type": "tree",
+    "mode": "040000",
+    "id": "4445c43a7e16fcc7e95f923f8ddadb8281d9c6c6"
   }
 ]

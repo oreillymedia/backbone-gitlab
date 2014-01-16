@@ -395,6 +395,20 @@ describe("GitLab", ->
           expect(blob.get("file_path")).toEqual("subfolder/SUBME.md")
         )
       )
+
+      it("should give trees in subfolders the correct path", ->
+        tree = new gitlab.Tree([], project:project, path:"subfolder")
+        tree.fetch()
+        waitsFor(->
+          return tree.length > 0
+        , "tree never loaded", ajaxTimeout
+        )
+        runs(->
+          subtree = tree.trees[0]
+          expect(subtree.name).toEqual("subsubfolder")
+          expect(subtree.path).toEqual("subfolder/subsubfolder")
+        )
+      )
     )
   )
 

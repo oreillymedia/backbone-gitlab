@@ -240,10 +240,12 @@
           throw "You have to initialize GitLab.Tree with a GitLab.Project model";
         }
         this.project = options.project;
-        this.path = options.path;
-        this.name = options.path;
         this.branch = options.branch || "master";
-        return this.trees = [];
+        this.trees = [];
+        if (options.path) {
+          this.path = options.path;
+          return this.name = _.last(options.path.split("/"));
+        }
       },
       fetch: function(options) {
         options = options || {};
@@ -259,7 +261,13 @@
         _(resp).filter(function(obj) {
           return obj.type === "tree";
         }).map(function(obj) {
-          return _this.trees.push(_this.project.tree(obj.name, _this.branch));
+          var full_path;
+          full_path = [];
+          if (_this.path) {
+            full_path.push(_this.path);
+          }
+          full_path.push(obj.name);
+          return _this.trees.push(_this.project.tree(full_path.join("/"), _this.branch));
         });
         return _(resp).filter(function(obj) {
           return obj.type === "blob";
