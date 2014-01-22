@@ -419,18 +419,15 @@ describe("GitLab", ->
         })
       )
 
-      it("should give trees in subfolders the correct path", ->
+      it("should give trees in subfolders the correct path", (done) ->
         tree = new gitlab.Tree([], project:project, path:"subfolder")
-        tree.fetch()
-        waitsFor(->
-          return tree.length > 0
-        , "tree never loaded", ajaxTimeout
-        )
-        runs(->
-          subtree = tree.trees[0]
-          expect(subtree.name).toEqual("subsubfolder")
-          expect(subtree.path).toEqual("subfolder/subsubfolder")
-        )
+        tree.fetch({
+          success: ->
+            subtree = tree.trees[0]
+            expect(subtree.name).toEqual("subsubfolder")
+            expect(subtree.path).toEqual("subfolder/subsubfolder")
+            done()
+        })
       )
     )
   )
