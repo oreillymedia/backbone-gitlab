@@ -194,6 +194,7 @@ GitLab = (url, token) ->
         branch_name: @branch
         content: @get("content")
         commit_message: @get("commit_message") || @defaultCommitMessage()
+        encoding: @get("encoding") || 'text'
       }
 
       # exit early if not provided with opts
@@ -246,7 +247,7 @@ GitLab = (url, token) ->
       @project = options.project
       @branch = options.branch || "master"
       @trees = []
-      
+
       if options.path
         @path = options.path
         @name = _.last(options.path.split("/"))
@@ -263,7 +264,7 @@ GitLab = (url, token) ->
       # add trees to trees. we're loosing the tree data but the path here.
       _(resp).filter((obj) =>
         obj.type == "tree"
-      ).map((obj) => 
+      ).map((obj) =>
         full_path = []
         full_path.push @path if @path
         full_path.push obj.name

@@ -533,12 +533,24 @@ describe("GitLab", ->
             expect(lastAjaxCallData().content).toEqual("Updated Content")
             expect(lastAjaxCallData().commit_message).toEqual("Updated subfolder/master.txt")
             expect(lastAjaxCallData().branch_name).toEqual("master")
+            expect(lastAjaxCallData().encoding).toEqual("text")
+
             done()
           )
 
         )
 
+      )
 
+      it("should include the correct encoding if specified", ->
+        spyOnAjax()
+        masterBlob.set("content", "iVBORw0KGgo")
+        masterBlob.set("encoding", "base64")
+        masterBlob.save()
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+        expect(lastAjaxCallData().content).toEqual("iVBORw0KGgo")
+        expect(lastAjaxCallData().encoding).toEqual("base64")
       )
 
       it("should use branch and commit message", ->
@@ -590,7 +602,7 @@ describe("GitLab", ->
         expect(parameters["commit_message"]).toEqual("this file is getting deleted")
 
     describe "toJSON()", ->
-      
+
       it "should return default attributes when called with no arguments", ->
         masterBlob.set "content", "Some file content"
         json = masterBlob.toJSON()
@@ -598,6 +610,7 @@ describe("GitLab", ->
         expect(json.name).toEqual('master.txt')
         expect(json.branch_name).toEqual('master')
         expect(json.content).toEqual('Some file content')
+        expect(json.encoding).toEqual('text')
         expect(json.commit_message).toEqual('Created subfolder/master.txt')
 
       it "should return attributes of Blob as specified by arguments", ->

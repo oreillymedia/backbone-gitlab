@@ -217,7 +217,8 @@
           file_path: this.get("file_path"),
           branch_name: this.branch,
           content: this.get("content"),
-          commit_message: this.get("commit_message") || this.defaultCommitMessage()
+          commit_message: this.get("commit_message") || this.defaultCommitMessage(),
+          encoding: this.get("encoding") || 'text'
         };
         if (typeof opts === "Array" && opts.length === 0) {
           return defaults;
