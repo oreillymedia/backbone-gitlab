@@ -294,7 +294,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain no project is passed in options", ->
-        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model");
+        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model");
       )
     )
 

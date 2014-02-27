@@ -133,14 +133,23 @@
     this.Members = this.Collection.extend({
       backboneClass: "Members",
       url: function() {
-        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/members";
+        if (this.project != null) {
+          return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/members";
+        } else if (this.group != null) {
+          return "" + root.url + "/groups/" + (this.group.get('id')) + "/members";
+        }
       },
       initialize: function(models, options) {
         options = options || {};
-        if (!options.project) {
-          throw "You have to initialize GitLab.Members with a GitLab.Project model";
+        if (!options.project && !options.group) {
+          throw "You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model";
         }
-        return this.project = options.project;
+        if (options.project != null) {
+          this.project = options.project;
+        }
+        if (options.group != null) {
+          return this.group = options.group;
+        }
       },
       model: root.Member,
       create: function(model, options) {
@@ -171,6 +180,25 @@
         model.save(null, options);
         return model;
       }
+    });
+    this.Group = this.Model.extend({
+      backboneClass: "Group",
+      initialize: function() {
+        return this.members = new root.Members([], {
+          group: this
+        });
+      }
+    });
+    this.Groups = this.Collection.extend({
+      backboneClass: "Groups",
+      url: function() {
+        return "" + root.url + "/groups";
+      },
+      initialize: function(models, options) {
+        options = options || {};
+        return this.user = options.user;
+      },
+      model: root.Group
     });
     this.Blob = this.Model.extend({
       backboneClass: "Blob",
