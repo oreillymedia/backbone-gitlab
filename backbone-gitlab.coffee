@@ -125,11 +125,16 @@ GitLab = (url, token) ->
 
   @Members = @Collection.extend(
     backboneClass: "Members"
-    url: -> "#{root.url}/projects/#{@project.escaped_path()}/members"
+    url: ->
+      if @project?
+        "#{root.url}/projects/#{@project.escaped_path()}/members"
+      else if @group?
+        "#{root.url}/groups/#{@group.get('id')}/members"
     initialize: (models, options) ->
       options = options || {}
-      if !options.project then throw "You have to initialize GitLab.Members with a GitLab.Project model"
-      @project = options.project
+      if !options.project and !options.group then throw "You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model"
+      @project = options.project if options.project?
+      @group = options.group if options.group?
     model: root.Member
 
     create: (model, options) ->
@@ -150,6 +155,25 @@ GitLab = (url, token) ->
       model.save(null, options);
       return model
   )
+
+  # Groups
+  # --------------------------------------------------------
+
+  @Group = @Model.extend(
+    backboneClass: "Group"
+    initialize: ->
+      @members = new root.Members([],{group:@})
+  )
+
+  @Groups = @Collection.extend(
+    backboneClass: "Groups"
+    url: -> "#{root.url}/groups"
+    initialize: (models, options) ->
+      options = options || {}
+      @user = options.user
+    model: root.Group
+  )
+
 
   # Blob
   # --------------------------------------------------------

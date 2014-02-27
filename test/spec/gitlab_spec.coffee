@@ -294,7 +294,7 @@ describe("GitLab", ->
 
     describe("initialize()", ->
       it("should complain no project is passed in options", ->
-        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model");
+        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model");
       )
     )
 
@@ -336,6 +336,23 @@ describe("GitLab", ->
             expect(ajaxArgs.url).toEqual(url + "/projects/owner%2Fproject/members/1")
     )
   )
+
+  # GitLab.Groups
+  # ----------------------------------------------------------------
+
+  describe "Groups", ->
+    describe "fetch()", ->
+      it "should get a user's groups, and be able to fetch the members of that group", (done)->
+        groups = new gitlab.Groups()
+        groups.fetch
+          success: ->
+            expect(groups.length).toEqual(1)
+            agroup = groups.get(1)
+            agroup.members.fetch
+              success: ->
+                expect(agroup.members.length).toEqual(2)
+                done()
+
 
   # GitLab.Tree
   # ----------------------------------------------------------------
