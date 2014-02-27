@@ -337,6 +337,23 @@ describe("GitLab", ->
     )
   )
 
+  # GitLab.Groups
+  # ----------------------------------------------------------------
+
+  describe "Groups", ->
+    describe "fetch()", ->
+      it "should get a user's groups, and be able to fetch the members of that group", (done)->
+        groups = new gitlab.Groups()
+        groups.fetch
+          success: ->
+            expect(groups.length).toEqual(1)
+            agroup = groups.get(1)
+            agroup.members.fetch
+              success: ->
+                expect(agroup.members.length).toEqual(2)
+                done()
+
+
   # GitLab.Tree
   # ----------------------------------------------------------------
 
