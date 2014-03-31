@@ -127,6 +127,44 @@
         return this.project = options.project;
       }
     });
+    this.MergeRequest = this.Model.extend({
+      backboneClass: "MergeRequest",
+      url: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests/" + (this.id || '');
+      },
+      initialize: function(model, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (!options.project) {
+          throw "You have to initialize GitLab.MergeRequest with a GitLab.Project model";
+        }
+        return this.project = options.project;
+      }
+    });
+    this.MergeRequests = this.Collection.extend({
+      backboneClass: "MergeRequests",
+      model: root.MergeRequest,
+      url: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests";
+      },
+      initialize: function(models, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (!options.project) {
+          throw "You have to initialize GitLab.MergeRequests with a GitLab.Project model";
+        }
+        return this.project = options.project;
+      },
+      fetch: function(options) {
+        if (options == null) {
+          options = {};
+        }
+        options.project = this.project;
+        return root.Collection.prototype.fetch.apply(this, [options]);
+      }
+    });
     this.Member = this.Model.extend({
       backboneClass: "Member"
     });
@@ -140,7 +178,9 @@
         }
       },
       initialize: function(models, options) {
-        options = options || {};
+        if (options == null) {
+          options = {};
+        }
         if (!options.project && !options.group) {
           throw "You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model";
         }

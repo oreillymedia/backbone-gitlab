@@ -27,7 +27,7 @@
 
 ajaxTimeout = 1000
 token = "abcdefg"
-url = "http://127.0.0.1:5000"
+url = "http://127.0.0.1:4321"
 
 describe("GitLab", ->
 
@@ -284,6 +284,61 @@ describe("GitLab", ->
     )
   )
 
+  # GitLab.MergeRequests
+  # ----------------------------------------------------------------
+
+  describe("MergeRequest", ->
+    describe("initialize()", ->
+      it "should throw an error if no project is passed in options", ->
+        expect(-> new gitlab.MergeRequest()).toThrow("You have to initialize GitLab.MergeRequest with a GitLab.Project model")
+    )
+
+    describe("fetch()", ->
+      it "should call the correct URL", ->
+        id = 1
+        merge_request = new gitlab.MergeRequest({id:id}, project:project)
+        spyOnAjax()
+        merge_request.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests/"+ id)
+    )
+
+    describe("save()", ->
+      it("should call the correct URL when new", ->
+        spyOnAjax()
+        merge_request = new gitlab.MergeRequest({source_branch:"slave", target_branch:"master", title:"test"}, project:project)
+        merge_request.save()
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests/")
+      )
+
+      it("should call the correct URL when modified", ->
+        spyOnAjax()
+        merge_request = new gitlab.MergeRequest({source_branch:"slave", target_branch:"master", title:"test", id:1}, project:project)
+        merge_request.save()
+        expect(lastAjaxCall().args[0].type).toEqual("PUT")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests/1")
+      )
+    )
+  )
+
+  describe("MergeRequests", ->
+    describe("initialize()", ->
+      it "should throw an error if no project is passed in options", ->
+        expect(-> new gitlab.MergeRequests()).toThrow("You have to initialize GitLab.MergeRequests with a GitLab.Project model")
+    )
+
+    describe("fetch()", ->
+      it "should call the correct URL", ->
+
+        merge_requests = new gitlab.MergeRequests([], {project:project})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests")
+    )
+  )
+
   # GitLab.Members
   # ----------------------------------------------------------------
 
@@ -293,8 +348,8 @@ describe("GitLab", ->
     beforeEach(-> members = new gitlab.Members([], project:project))
 
     describe("initialize()", ->
-      it("should complain no project is passed in options", ->
-        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model");
+      it("should throw error if no project is passed in options", ->
+        expect(-> new gitlab.Members()).toThrow("You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model")
       )
     )
 
