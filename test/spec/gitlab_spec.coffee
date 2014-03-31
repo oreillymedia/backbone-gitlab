@@ -295,7 +295,7 @@ describe("GitLab", ->
 
     describe("fetch()", ->
       it "should call the correct URL", ->
-        id = 2
+        id = 1
         merge_request = new gitlab.MergeRequest({id:id}, project:project)
         spyOnAjax()
         merge_request.fetch()
@@ -330,7 +330,8 @@ describe("GitLab", ->
 
     describe("fetch()", ->
       it "should call the correct URL", ->
-        merge_requests = new gitlab.MergeRequests([], project:project)
+
+        merge_requests = new gitlab.MergeRequests([], {project:project})
         spyOnAjax()
         merge_requests.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")

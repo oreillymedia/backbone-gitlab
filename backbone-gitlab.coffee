@@ -123,7 +123,7 @@ GitLab = (url, token) ->
     backboneClass: "MergeRequest"
     url: ->
       "#{root.url}/projects/#{@project.escaped_path()}/merge_requests/#{@id || ''}"
-    initialize: (models, options={}) ->
+    initialize: (model, options={}) ->
       if !options.project then throw "You have to initialize GitLab.MergeRequest with a GitLab.Project model"
       @project = options.project
   )
@@ -137,6 +137,13 @@ GitLab = (url, token) ->
     initialize: (models, options={}) ->
       if !options.project then throw "You have to initialize GitLab.MergeRequests with a GitLab.Project model"
       @project = options.project
+
+    # Custom fetch function. Used to add project info in fetch call.
+    #
+    # Returns nothing.
+    fetch: (options={}) ->
+      options.project = @project
+      root.Collection.prototype.fetch.apply(this, [options])
   )
 
 

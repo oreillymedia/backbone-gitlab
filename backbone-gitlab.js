@@ -132,7 +132,7 @@
       url: function() {
         return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests/" + (this.id || '');
       },
-      initialize: function(models, options) {
+      initialize: function(model, options) {
         if (options == null) {
           options = {};
         }
@@ -156,6 +156,13 @@
           throw "You have to initialize GitLab.MergeRequests with a GitLab.Project model";
         }
         return this.project = options.project;
+      },
+      fetch: function(options) {
+        if (options == null) {
+          options = {};
+        }
+        options.project = this.project;
+        return root.Collection.prototype.fetch.apply(this, [options]);
       }
     });
     this.Member = this.Model.extend({
