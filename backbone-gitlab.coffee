@@ -116,6 +116,30 @@ GitLab = (url, token) ->
       @project = options.project
   )
 
+  # Merge Requests
+  # --------------------------------------------------------
+
+  @MergeRequest = @Model.extend(
+    backboneClass: "MergeRequest"
+    url: ->
+      "#{root.url}/projects/#{@project.escaped_path()}/merge_requests/#{@id || ''}"
+    initialize: (models, options={}) ->
+      if !options.project then throw "You have to initialize GitLab.MergeRequest with a GitLab.Project model"
+      @project = options.project
+  )
+
+  @MergeRequests = @Collection.extend(
+    backboneClass: "MergeRequests"
+    model: root.MergeRequest
+
+    url: -> "#{root.url}/projects/#{@project.escaped_path()}/merge_requests"
+
+    initialize: (models, options={}) ->
+      if !options.project then throw "You have to initialize GitLab.MergeRequests with a GitLab.Project model"
+      @project = options.project
+  )
+
+
   # Members
   # --------------------------------------------------------
 
@@ -130,8 +154,7 @@ GitLab = (url, token) ->
         "#{root.url}/projects/#{@project.escaped_path()}/members"
       else if @group?
         "#{root.url}/groups/#{@group.get('id')}/members"
-    initialize: (models, options) ->
-      options = options || {}
+    initialize: (models, options={}) ->
       if !options.project and !options.group then throw "You have to initialize GitLab.Members with a GitLab.Project model or Gitlab.Group model"
       @project = options.project if options.project?
       @group = options.group if options.group?
