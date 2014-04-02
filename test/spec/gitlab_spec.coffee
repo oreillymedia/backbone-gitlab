@@ -300,7 +300,7 @@ describe("GitLab", ->
         spyOnAjax()
         merge_request.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests/"+ id)
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_request/"+ id)
     )
 
     describe("save()", ->
@@ -309,7 +309,7 @@ describe("GitLab", ->
         merge_request = new gitlab.MergeRequest({source_branch:"slave", target_branch:"master", title:"test"}, project:project)
         merge_request.save()
         expect(lastAjaxCall().args[0].type).toEqual("POST")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests/")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests")
       )
 
       it("should call the correct URL when modified", ->
@@ -317,7 +317,7 @@ describe("GitLab", ->
         merge_request = new gitlab.MergeRequest({source_branch:"slave", target_branch:"master", title:"test", id:1}, project:project)
         merge_request.save()
         expect(lastAjaxCall().args[0].type).toEqual("PUT")
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests/1")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_request/1")
       )
     )
   )

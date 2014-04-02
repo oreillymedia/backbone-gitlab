@@ -129,8 +129,8 @@
     });
     this.MergeRequest = this.Model.extend({
       backboneClass: "MergeRequest",
-      url: function() {
-        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests/" + (this.id || '');
+      urlRoot: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_request";
       },
       initialize: function(model, options) {
         if (options == null) {
@@ -140,6 +140,13 @@
           throw "You have to initialize GitLab.MergeRequest with a GitLab.Project model";
         }
         return this.project = options.project;
+      },
+      sync: function(method, model, options) {
+        options = options || {};
+        if (method.toLowerCase() === "create") {
+          options.url = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests";
+        }
+        return root.sync.apply(this, arguments);
       }
     });
     this.MergeRequests = this.Collection.extend({

@@ -121,11 +121,20 @@ GitLab = (url, token) ->
 
   @MergeRequest = @Model.extend(
     backboneClass: "MergeRequest"
-    url: ->
-      "#{root.url}/projects/#{@project.escaped_path()}/merge_requests/#{@id || ''}"
+    urlRoot: ->
+      "#{root.url}/projects/#{@project.escaped_path()}/merge_request"
+
     initialize: (model, options={}) ->
       if !options.project then throw "You have to initialize GitLab.MergeRequest with a GitLab.Project model"
       @project = options.project
+
+    sync: (method, model, options) ->
+      options = options || {}
+
+      if method.toLowerCase() == "create"
+        options.url = "#{root.url}/projects/#{@project.escaped_path()}/merge_requests"
+
+      root.sync.apply(this, arguments)
   )
 
   @MergeRequests = @Collection.extend(
