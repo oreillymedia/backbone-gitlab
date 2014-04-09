@@ -251,14 +251,39 @@ describe("GitLab", ->
   # GitLab.Project
   # ----------------------------------------------------------------
 
-  describe "Projects", ->
-    describe "fetch", ->
+  describe("Projects", ->
+    describe("fetch", ->
       it "should call the correct URL", ->
         projects = new gitlab.Projects()
         spyOnAjax()
         projects.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects"
+    )
+  )
+
+  # Gitlab.Commits
+  # ----------------------------------------------------------------
+
+  describe("Commits", ->
+    describe("fetch", ->
+      it("should call the correct URL", ->
+        commits = new gitlab.Commits([],{project:project})
+        spyOnAjax()
+        commits.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits"
+      )
+
+      it("should add a ref name when initiated with a branch", ->
+        commits = new gitlab.Commits([],{project:project,ref_name:"slave"})
+        spyOnAjax()
+        commits.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits?ref_name=slave"
+      )
+    )
+  )
 
   # GitLab.Branches
   # ----------------------------------------------------------------

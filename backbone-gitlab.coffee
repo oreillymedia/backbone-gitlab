@@ -97,6 +97,30 @@ GitLab = (url, token) ->
     url: -> "#{root.url}/projects"
   )
 
+  # Commits
+  # --------------------------------------------------------
+
+  @Commit = @Model.extend(
+    backboneClass: "Commit"
+  )
+
+  @Commits = @Collection.extend(
+    backboneClass: "Commits"
+    model: root.Commit
+
+    url: ->
+      base = "#{root.url}/projects/#{@project.escaped_path()}/repository/commits"
+      if @ref_name?
+        base+"?ref_name=#{@ref_name}"
+      else
+        base
+
+    initialize: (models, options={}) ->
+      if !options.project then throw "You have to initialize GitLab.Commits with a GitLab.Project model"
+      @project = options.project
+      @ref_name = options.ref_name if options.ref_name?
+  )
+
   # Branches
   # --------------------------------------------------------
 
