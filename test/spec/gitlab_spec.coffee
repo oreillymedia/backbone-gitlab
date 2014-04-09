@@ -262,6 +262,13 @@ describe("GitLab", ->
     )
   )
 
+  # Gitlab.Events
+  # ----------------------------------------------------------------
+  describe("Events", ->
+    describe("initialize", ->)
+    describe("fetch", ->)
+  )
+
   # Gitlab.Commits
   # ----------------------------------------------------------------
 
@@ -281,6 +288,37 @@ describe("GitLab", ->
         commits.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits?ref_name=slave"
+      )
+    )
+  )
+
+  # Gitlab.Diff
+  # ----------------------------------------------------------------
+
+  describe("Diff", ->
+    describe("initialize", ->
+      it("should complain if no project is passed in options", ->
+        commits = new gitlab.Commits([],{project:project})
+        expect(-> new gitlab.Diff({},{commit: commits.first()})).toThrow("You have to initialize GitLab.Diff with a GitLab.Project model")
+      )
+
+      it("should complain if no commit is passed in options", ->
+        expect(-> new gitlab.Diff({},{project: project})).toThrow("You have to initialize GitLab.Diff with a GitLab.Commit model")
+      )
+    )
+
+    describe("fetch", ->
+      it("should call the correct URL", (done) ->
+        commit = new gitlab.Commit({},{project:project})
+        commit.fetch()
+        setTimeout((->
+          diff = new gitlab.Diff({},{project: project, commit: commit})
+          spyOnAjax()
+          diff.fetch()
+          expect(lastAjaxCall().args[0].type).toEqual("GET")
+          expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits/#{commit.get('id')}/diff"
+          done()
+        ),60)
       )
     )
   )
