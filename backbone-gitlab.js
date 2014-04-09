@@ -110,6 +110,34 @@
         return "" + root.url + "/projects";
       }
     });
+    this.Commit = this.Model.extend({
+      backboneClass: "Commit"
+    });
+    this.Commits = this.Collection.extend({
+      backboneClass: "Commits",
+      model: root.Commit,
+      url: function() {
+        var base;
+        base = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/commits";
+        if (this.ref_name != null) {
+          return base + ("?ref_name=" + this.ref_name);
+        } else {
+          return base;
+        }
+      },
+      initialize: function(models, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (!options.project) {
+          throw "You have to initialize GitLab.Commits with a GitLab.Project model";
+        }
+        this.project = options.project;
+        if (options.ref_name != null) {
+          return this.ref_name = options.ref_name;
+        }
+      }
+    });
     this.Branch = this.Model.extend({
       backboneClass: "Branch"
     });
