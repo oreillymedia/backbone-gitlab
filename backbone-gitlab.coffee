@@ -152,6 +152,8 @@ GitLab = (url, token) ->
       if !options.project then throw "You have to initialize GitLab.Commits with a GitLab.Project model"
       @project = options.project
       @ref_name = options.ref_name if options.ref_name?
+      @page = options.page if options.page?
+      @per_page = options.per_page if options.per_page?
   )
 
   # Diff

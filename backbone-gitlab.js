@@ -194,7 +194,13 @@
         }
         this.project = options.project;
         if (options.ref_name != null) {
-          return this.ref_name = options.ref_name;
+          this.ref_name = options.ref_name;
+        }
+        if (options.page != null) {
+          this.page = options.page;
+        }
+        if (options.per_page != null) {
+          return this.per_page = options.per_page;
         }
       }
     });
