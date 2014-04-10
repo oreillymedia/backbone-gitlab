@@ -110,20 +110,80 @@
         return "" + root.url + "/projects";
       }
     });
+    this.Events = this.Collection.extend({
+      backboneClass: "Events",
+      parameters: function() {
+        var arr;
+        arr = [];
+        if (this.page) {
+          arr.push("page=" + this.page);
+        }
+        if (this.per_page) {
+          arr.push("per_page=" + this.per_page);
+        }
+        if (arr.length > 0) {
+          return "?" + (arr.join('&'));
+        } else {
+          return "";
+        }
+      },
+      url: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/events" + (this.parameters());
+      },
+      initialize: function(models, options) {
+        if (options == null) {
+          options = {};
+        }
+        if (!options.project) {
+          throw "You have to initialize GitLab.Events with a GitLab.Project model";
+        }
+        this.project = options.project;
+        if (options.per_page != null) {
+          this.per_page = options.per_page;
+        }
+        if (options.page != null) {
+          return this.page = options.page;
+        }
+      }
+    });
     this.Commit = this.Model.extend({
-      backboneClass: "Commit"
+      backboneClass: "Commit",
+      urlRoot: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/commits";
+      },
+      initialize: function(data, options) {
+        var _ref;
+        if ((options.project == null) && (((_ref = this.collection) != null ? _ref.project : void 0) == null)) {
+          throw "You have to initialize GitLab.Commit with a GitLab.Project model";
+        }
+        return this.project = options.project || this.collection.project;
+      }
     });
     this.Commits = this.Collection.extend({
       backboneClass: "Commits",
       model: root.Commit,
+      parameters: function() {
+        var arr;
+        arr = [];
+        if (this.ref_name) {
+          arr.push("ref_name=" + this.ref_name);
+        }
+        if (this.page) {
+          arr.push("page=" + this.page);
+        }
+        if (this.per_page) {
+          arr.push("per_page=" + this.per_page);
+        }
+        if (arr.length > 0) {
+          return "?" + (arr.join('&'));
+        } else {
+          return "";
+        }
+      },
       url: function() {
         var base;
         base = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/commits";
-        if (this.ref_name != null) {
-          return base + ("?ref_name=" + this.ref_name);
-        } else {
-          return base;
-        }
+        return base + this.parameters();
       },
       initialize: function(models, options) {
         if (options == null) {
@@ -134,8 +194,30 @@
         }
         this.project = options.project;
         if (options.ref_name != null) {
-          return this.ref_name = options.ref_name;
+          this.ref_name = options.ref_name;
         }
+        if (options.page != null) {
+          this.page = options.page;
+        }
+        if (options.per_page != null) {
+          return this.per_page = options.per_page;
+        }
+      }
+    });
+    this.Diff = this.Model.extend({
+      backboneClass: "Diff",
+      url: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/commits/" + this.commit.id + "/diff";
+      },
+      initialize: function(data, options) {
+        if (!options.project) {
+          throw "You have to initialize GitLab.Diff with a GitLab.Project model";
+        }
+        if (!options.commit) {
+          throw "You have to initialize GitLab.Diff with a GitLab.Commit model";
+        }
+        this.project = options.project;
+        return this.commit = options.commit;
       }
     });
     this.Branch = this.Model.extend({

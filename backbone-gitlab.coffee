@@ -97,28 +97,78 @@ GitLab = (url, token) ->
     url: -> "#{root.url}/projects"
   )
 
+  # Events
+  # --------------------------------------------------------
+
+  @Events = @Collection.extend(
+    backboneClass: "Events"
+
+    parameters: ->
+      arr = []
+      arr.push("page=#{@page}") if @page
+      arr.push("per_page=#{@per_page}") if @per_page
+      if arr.length > 0 then "?#{arr.join('&')}" else ""
+
+    url: ->
+      "#{root.url}/projects/#{@project.escaped_path()}/events#{@parameters()}"
+
+    initialize: (models, options={}) ->
+      if !options.project then throw "You have to initialize GitLab.Events with a GitLab.Project model"
+      @project = options.project
+      @per_page = options.per_page if options.per_page?
+      @page = options.page if options.page?
+  )
+
   # Commits
   # --------------------------------------------------------
 
   @Commit = @Model.extend(
     backboneClass: "Commit"
+    urlRoot: ->
+      "#{root.url}/projects/#{@project.escaped_path()}/repository/commits"
+
+    initialize: (data,options) ->
+      if !options.project? and !@collection?.project? then throw "You have to initialize GitLab.Commit with a GitLab.Project model"
+      @project = options.project || @collection.project
   )
 
   @Commits = @Collection.extend(
     backboneClass: "Commits"
     model: root.Commit
 
+    parameters: ->
+      arr = []
+      arr.push("ref_name=#{@ref_name}") if @ref_name
+      arr.push("page=#{@page}") if @page
+      arr.push("per_page=#{@per_page}") if @per_page
+      if arr.length > 0 then "?#{arr.join('&')}" else ""
+
     url: ->
       base = "#{root.url}/projects/#{@project.escaped_path()}/repository/commits"
-      if @ref_name?
-        base+"?ref_name=#{@ref_name}"
-      else
-        base
+
+      base+@parameters()
 
     initialize: (models, options={}) ->
       if !options.project then throw "You have to initialize GitLab.Commits with a GitLab.Project model"
       @project = options.project
       @ref_name = options.ref_name if options.ref_name?
+      @page = options.page if options.page?
+      @per_page = options.per_page if options.per_page?
+  )
+
+  # Diff
+  # --------------------------------------------------------
+
+  @Diff = @Model.extend(
+    backboneClass: "Diff"
+    url: ->
+      "#{root.url}/projects/#{@project.escaped_path()}/repository/commits/#{@commit.id}/diff"
+
+    initialize: (data,options) ->
+      if !options.project then throw "You have to initialize GitLab.Diff with a GitLab.Project model"
+      if !options.commit then throw "You have to initialize GitLab.Diff with a GitLab.Commit model"
+      @project = options.project
+      @commit = options.commit
   )
 
   # Branches

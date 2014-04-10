@@ -262,6 +262,50 @@ describe("GitLab", ->
     )
   )
 
+  # Gitlab.Events
+  # ----------------------------------------------------------------
+  describe("Events", ->
+    describe("initialize", ->
+      it("should throw error if no project is passed in options", ->
+        expect(-> new gitlab.Events()).toThrow("You have to initialize GitLab.Events with a GitLab.Project model")
+      )
+    )
+
+    describe("fetch", ->
+      it("should call the correct URL with no parameters", ->
+        events = new gitlab.Events(null,{project:project})
+        spyOnAjax()
+        events.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/events"
+      )
+
+      it("should call the correct URL with per_page parameter", ->
+        events = new gitlab.Events(null,{project:project,per_page:40})
+        spyOnAjax()
+        events.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/events?per_page=40"
+      )
+
+      it("should call the correct URL with page parameter", ->
+        events = new gitlab.Events(null,{project:project,page:2})
+        spyOnAjax()
+        events.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/events?page=2"
+      )
+
+      it("should call the correct URL with per_page and page parameter", ->
+        events = new gitlab.Events(null,{project:project,per_page:40,page:2})
+        spyOnAjax()
+        events.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/events?page=2&per_page=40"
+      )
+    )
+  )
+
   # Gitlab.Commits
   # ----------------------------------------------------------------
 
@@ -275,12 +319,71 @@ describe("GitLab", ->
         expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits"
       )
 
-      it("should add a ref name when initiated with a branch", ->
+      it("should call the correct URL with a ref_name", ->
         commits = new gitlab.Commits([],{project:project,ref_name:"slave"})
         spyOnAjax()
         commits.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits?ref_name=slave"
+      )
+
+      it("should call the correct URL with page parameter", ->
+        commits = new gitlab.Commits([],{project:project,page:2})
+        spyOnAjax()
+        commits.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits?page=2"
+      )
+
+      it("should call the correct URL with per_page parameter", ->
+        commits = new gitlab.Commits([],{project:project,per_page:40})
+        spyOnAjax()
+        commits.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits?per_page=40"
+      )
+
+      it("should call the correct URL with all parameters", ->
+        commits = new gitlab.Commits([],{
+          project:project,
+          ref_name:"slave",
+          per_page:40,
+          page: 2
+        })
+        spyOnAjax()
+        commits.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits?ref_name=slave&page=2&per_page=40"
+      )
+    )
+  )
+
+  # Gitlab.Diff
+  # ----------------------------------------------------------------
+
+  describe("Diff", ->
+    describe("initialize", ->
+      it("should throw error if no project is passed in options", ->
+        commits = new gitlab.Commits([],{project:project})
+        expect(-> new gitlab.Diff({},{commit: commits.first()})).toThrow("You have to initialize GitLab.Diff with a GitLab.Project model")
+      )
+
+      it("should throw error if no commit is passed in options", ->
+        expect(-> new gitlab.Diff({},{project: project})).toThrow("You have to initialize GitLab.Diff with a GitLab.Commit model")
+      )
+    )
+
+    describe("fetch", ->
+      it("should call the correct URL", (done) ->
+        commit = new gitlab.Commit({id:"12345"},{project:project})
+        setTimeout((->
+          diff = new gitlab.Diff({},{project: project, commit: commit})
+          spyOnAjax()
+          diff.fetch()
+          expect(lastAjaxCall().args[0].type).toEqual("GET")
+          expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/commits/12345/diff"
+          done()
+        ),60)
       )
     )
   )
@@ -294,7 +397,7 @@ describe("GitLab", ->
     beforeEach(-> branches = new gitlab.Branches([], project:project))
 
     describe("initialize()", ->
-      it("should complain if no project is passed in options", ->
+      it("should throw error if no project is passed in options", ->
         expect(-> new gitlab.Branches()).toThrow("You have to initialize GitLab.Branches with a GitLab.Project model");
       )
     )
@@ -440,7 +543,7 @@ describe("GitLab", ->
   describe("Tree", ->
 
     describe("initialize()", ->
-      it("should complain if no project is passed in options", ->
+      it("should throw error if no project is passed in options", ->
         expect(-> new gitlab.Tree()).toThrow("You have to initialize GitLab.Tree with a GitLab.Project model")
       )
     )
