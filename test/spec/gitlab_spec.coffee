@@ -457,13 +457,61 @@ describe("GitLab", ->
     )
 
     describe("fetch()", ->
-      it "should call the correct URL", ->
-
+      it("should call the correct URL", ->
         merge_requests = new gitlab.MergeRequests([], {project:project})
         spyOnAjax()
         merge_requests.fetch()
         expect(lastAjaxCall().args[0].type).toEqual("GET")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_requests")
+      )
+
+      it("should call the correct URL with per_page parameter", ->
+        merge_requests = new gitlab.MergeRequests(null,{project:project,per_page:40})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/merge_requests?per_page=40"
+      )
+
+      it("should call the correct URL with page parameter", ->
+        merge_requests = new gitlab.MergeRequests(null,{project:project,page:2})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/merge_requests?page=2"
+      )
+
+      it("should call the correct URL for opened requests", ->
+        merge_requests = new gitlab.MergeRequests(null,{project:project,state:"opened"})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/merge_requests?state=opened"
+      )
+
+      it("should call the correct URL for closed requests", ->
+        merge_requests = new gitlab.MergeRequests(null,{project:project,state:"closed"})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/merge_requests?state=closed"
+      )
+
+      it("should call the correct URL for merged requests", ->
+        merge_requests = new gitlab.MergeRequests(null,{project:project,state:"merged"})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/merge_requests?state=merged"
+      )
+
+      it("should call the correct URL with per_page and page parameter", ->
+        merge_requests = new gitlab.MergeRequests(null,{project:project,per_page:40,page:2})
+        spyOnAjax()
+        merge_requests.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/merge_requests?page=2&per_page=40"
+      )
     )
   )
 

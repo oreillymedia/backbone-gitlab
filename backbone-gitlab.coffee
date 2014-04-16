@@ -215,11 +215,21 @@ GitLab = (url, token) ->
     backboneClass: "MergeRequests"
     model: root.MergeRequest
 
-    url: -> "#{root.url}/projects/#{@project.escaped_path()}/merge_requests"
+    parameters: ->
+      arr = []
+      arr.push("page=#{@page}") if @page
+      arr.push("per_page=#{@per_page}") if @per_page
+      arr.push("state=#{@state}") if @state
+      if arr.length > 0 then "?#{arr.join('&')}" else ""
+
+    url: -> "#{root.url}/projects/#{@project.escaped_path()}/merge_requests#{@parameters()}"
 
     initialize: (models, options={}) ->
       if !options.project then throw "You have to initialize GitLab.MergeRequests with a GitLab.Project model"
       @project = options.project
+      @page = options.page if options.page?
+      @per_page = options.per_page if options.per_page?
+      @state = options.state if options.state?
 
     # Custom fetch function. Used to add project info in fetch call.
     #

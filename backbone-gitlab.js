@@ -262,8 +262,26 @@
     this.MergeRequests = this.Collection.extend({
       backboneClass: "MergeRequests",
       model: root.MergeRequest,
+      parameters: function() {
+        var arr;
+        arr = [];
+        if (this.page) {
+          arr.push("page=" + this.page);
+        }
+        if (this.per_page) {
+          arr.push("per_page=" + this.per_page);
+        }
+        if (this.state) {
+          arr.push("state=" + this.state);
+        }
+        if (arr.length > 0) {
+          return "?" + (arr.join('&'));
+        } else {
+          return "";
+        }
+      },
       url: function() {
-        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests";
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests" + (this.parameters());
       },
       initialize: function(models, options) {
         if (options == null) {
@@ -272,7 +290,16 @@
         if (!options.project) {
           throw "You have to initialize GitLab.MergeRequests with a GitLab.Project model";
         }
-        return this.project = options.project;
+        this.project = options.project;
+        if (options.page != null) {
+          this.page = options.page;
+        }
+        if (options.per_page != null) {
+          this.per_page = options.per_page;
+        }
+        if (options.state != null) {
+          return this.state = options.state;
+        }
       },
       fetch: function(options) {
         if (options == null) {
