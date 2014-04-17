@@ -391,6 +391,14 @@ describe("GitLab", ->
   # GitLab.Branches
   # ----------------------------------------------------------------
 
+  describe("Branch", ->
+    describe("initialize()", ->
+      it("should throw an error if no project is passed", ->
+        expect(-> new gitlab.Branch()).toThrow("You have to initialize Gitlab.Branch with a Gitlab.Project model")
+      )
+    )
+  )
+
   describe("Branches", ->
 
     branches = null

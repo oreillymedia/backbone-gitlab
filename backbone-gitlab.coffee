@@ -176,6 +176,11 @@ GitLab = (url, token) ->
 
   @Branch = @Model.extend(
     backboneClass: "Branch"
+    urlRoot: -> "#{root.url}/projects/#{@project.escaped_path()}/repository/branches/#{@get('name')}"
+
+    initialize: (data,options={}) ->
+      if !@collection?.project? and !options.project then throw "You have to initialize Gitlab.Branch with a Gitlab.Project model"
+      @project = if @collection?.project? then @collection.project else options.project
   )
 
   @Branches = @Collection.extend(
