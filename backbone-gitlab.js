@@ -221,7 +221,20 @@
       }
     });
     this.Branch = this.Model.extend({
-      backboneClass: "Branch"
+      backboneClass: "Branch",
+      urlRoot: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches/" + (this.get('name'));
+      },
+      initialize: function(data, options) {
+        var _ref, _ref1;
+        if (options == null) {
+          options = {};
+        }
+        if ((((_ref = this.collection) != null ? _ref.project : void 0) == null) && !options.project) {
+          throw "You have to initialize Gitlab.Branch with a Gitlab.Project model";
+        }
+        return this.project = ((_ref1 = this.collection) != null ? _ref1.project : void 0) != null ? this.collection.project : options.project;
+      }
     });
     this.Branches = this.Collection.extend({
       backboneClass: "Branches",
