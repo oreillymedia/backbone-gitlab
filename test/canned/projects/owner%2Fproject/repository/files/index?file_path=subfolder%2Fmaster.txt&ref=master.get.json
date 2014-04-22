@@ -1,0 +1,10 @@
+{
+  "file_name": "master.txt",
+  "file_path": "subfolder/master.txt",
+  "size": 389,
+  "encoding": "base64",
+  "content": "SGVsbG8h",
+  "ref": "master",
+  "blob_id": "a13655b69ba37178e0913f990c5613dbcea278ce",
+  "commit_id": "a0a9ec83543a804dc13c4de3ac714c43ee57f0fb"
+}

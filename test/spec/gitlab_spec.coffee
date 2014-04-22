@@ -725,13 +725,12 @@ describe("GitLab", ->
       expect(-> new gitlab.Blob()).toThrow("You have to initialize GitLab.Blob with a GitLab.Project model")
     )
 
-    describe("fetchContent()", ->
+    describe("fetch()", ->
 
       it("should fetch the blob contents and merge with other data", (done) ->
         spyOnAjax()
-        masterBlob.fetchContent({success: ->
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/master")
-          expect(lastAjaxCallData().filepath).toEqual("subfolder/master.txt")
+        masterBlob.fetch({success: ->
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fmaster.txt&ref=master")
           expect(masterBlob.get("content")).toEqual("Hello!")
           expect(masterBlob.get("name")).toEqual("master.txt")
           expect(masterBlob.get("file_path")).toEqual("subfolder/master.txt")
@@ -741,8 +740,8 @@ describe("GitLab", ->
 
       it("should use branch if specified", ->
         spyOnAjax()
-        slaveBlob.fetchContent()
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/blobs/slave")
+        slaveBlob.fetch()
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fslave.txt&ref=slave")
       )
     )
 
@@ -888,7 +887,7 @@ describe("GitLab", ->
       it("should parse string response from /blobs", (done) ->
         spyOnAjax()
         masterBlob.set("content", "Goodbye!")
-        masterBlob.fetchContent success: ->
+        masterBlob.fetch success: ->
           expect(masterBlob.get("content")).toEqual("Hello!")
           done()
       )
