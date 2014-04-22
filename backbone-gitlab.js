@@ -422,7 +422,7 @@
         options = options || {};
         baseURL = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository";
         if (method.toLowerCase() === "read") {
-          options.url = "" + baseURL + "/blobs/" + this.branch;
+          options.url = "" + baseURL + "/files?file_path=" + (this.get('file_path').replace('/', '%2F')) + "&ref=" + this.branch;
         } else {
           options.url = "" + baseURL + "/files";
         }
@@ -464,22 +464,12 @@
           return "Updated " + (this.get("file_path"));
         }
       },
-      fetchContent: function(options) {
-        return this.fetch(_.extend({
-          dataType: "html",
-          data: {
-            filepath: this.get("file_path")
-          }
-        }, options));
-      },
       parse: function(response, options) {
-        if (_.isString(response)) {
-          return {
-            content: response
-          };
-        } else {
-          return response;
+        if (response.encoding === "base64") {
+          response.content = atob(response.content);
+          response.encoding = "text";
         }
+        return response;
       }
     });
     this.Tree = this.Collection.extend({

@@ -327,7 +327,7 @@ GitLab = (url, token) ->
       options = options || {}
       baseURL = "#{root.url}/projects/#{@project.escaped_path()}/repository"
       if method.toLowerCase() == "read"
-        options.url = "#{baseURL}/blobs/#{@branch}"
+        options.url = "#{baseURL}/files?file_path=#{@get('file_path').replace('/','%2F')}&ref=#{@branch}"
       else
         options.url = "#{baseURL}/files"
 
@@ -367,21 +367,11 @@ GitLab = (url, token) ->
       else
         "Updated #{@get("file_path")}"
 
-    fetchContent: (options) ->
-      @fetch(
-        _.extend(
-          dataType:"html"
-          data: filepath: @get("file_path")
-        , options)
-      )
-
     parse: (response, options) ->
-      # if response is blob content from /blobs
-      if _.isString(response)
-        content: response
-      # if response is blob object from /files
-      else
-        response
+      if response.encoding is "base64"
+        response.content = atob(response.content)
+        response.encoding = "text"
+      response
   )
 
   # Tree
