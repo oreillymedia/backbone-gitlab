@@ -223,7 +223,15 @@
     this.Branch = this.Model.extend({
       backboneClass: "Branch",
       urlRoot: function() {
-        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches/" + (this.get('name'));
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches";
+      },
+      sync: function(method, model, options) {
+        if (method.toLowerCase() === 'create') {
+          options.url = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches";
+        } else {
+          options.url = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/branches/" + (this.get('name'));
+        }
+        return root.sync(method, model, options);
       },
       initialize: function(data, options) {
         var _ref, _ref1;

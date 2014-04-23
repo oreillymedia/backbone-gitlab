@@ -176,7 +176,16 @@ GitLab = (url, token) ->
 
   @Branch = @Model.extend(
     backboneClass: "Branch"
-    urlRoot: -> "#{root.url}/projects/#{@project.escaped_path()}/repository/branches/#{@get('name')}"
+    urlRoot: ->
+      "#{root.url}/projects/#{@project.escaped_path()}/repository/branches"
+
+    sync: (method, model, options) ->
+      if method.toLowerCase() is 'create'
+        options.url = "#{root.url}/projects/#{@project.escaped_path()}/repository/branches"
+      else
+        options.url = "#{root.url}/projects/#{@project.escaped_path()}/repository/branches/#{@get('name')}"
+
+      root.sync(method, model, options);
 
     initialize: (data,options={}) ->
       if !@collection?.project? and !options.project then throw "You have to initialize Gitlab.Branch with a Gitlab.Project model"

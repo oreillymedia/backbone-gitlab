@@ -418,6 +418,15 @@ describe("GitLab", ->
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches")
       )
     )
+
+    describe("create()", ->
+      it("shoudl call the correct URL", ->
+        spyOnAjax()
+        branches.create({branch_name:"new-branch",ref:"master"})
+        expect(lastAjaxCall().args[0].type).toEqual("POST")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches")
+      )
+    )
   )
 
   # GitLab.MergeRequests

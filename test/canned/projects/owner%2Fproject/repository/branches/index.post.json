@@ -1,0 +1,17 @@
+{
+  "name": "newbranch",
+  "commit": {
+    "id": "75f8a5cc7d3faf32b97a0fe6a935e20d8d40a3b3",
+    "message": "Edited #01-titlepage.html",
+    "parent_ids": [
+      "033764dc625e542ada291e5089df5a27875866c9"
+    ],
+    "authored_date": "2014-04-23T14:47:32+00:00",
+    "author_name": "sklise@oreilly.com",
+    "author_email": "sklise@oreilly.com",
+    "committed_date": "2014-04-23T14:47:32+00:00",
+    "committer_name": "sklise@oreilly.com",
+    "committer_email": "sklise@oreilly.com"
+  },
+  "protected": false
+}
