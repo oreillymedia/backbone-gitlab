@@ -378,7 +378,7 @@ GitLab = (url, token) ->
 
     parse: (response, options) ->
       if response.encoding is "base64"
-        response.content = atob(response.content)
+        response.content = atob(response.content.replace(/\n/g,''))
         response.encoding = "text"
       response
   )
