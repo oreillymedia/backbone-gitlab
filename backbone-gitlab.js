@@ -273,11 +273,26 @@
         return this.project = options.project;
       },
       sync: function(method, model, options) {
+        var _ref;
         options = options || {};
+        console.log(method, options);
         if (method.toLowerCase() === "create") {
           options.url = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_requests";
+        } else if (((_ref = options.method) != null ? _ref.toLowerCase() : void 0) === "merge") {
+          options.method = "PUT";
+          options.url = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/merge_request/" + (this.get('id')) + "/merge";
         }
         return root.sync.apply(this, arguments);
+      },
+      merge: function(commit_message) {
+        var data;
+        data = {};
+        if (commit_message != null) {
+          data.merge_commit_message = commit_message;
+        }
+        return this.save(data, {
+          method: "merge"
+        });
       }
     });
     this.MergeRequests = this.Collection.extend({

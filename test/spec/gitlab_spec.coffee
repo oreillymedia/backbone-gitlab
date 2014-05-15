@@ -465,6 +465,20 @@ describe("GitLab", ->
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_request/1")
       )
     )
+
+    describe("merge()", ->
+      it("should call the correct url", ->
+        spyOnAjax()
+        merge_request = new gitlab.MergeRequest({id:1}, project:project)
+        merge_request.merge()
+        expect(lastAjaxCall().args[0].type).toEqual("PUT")
+        expect(lastAjaxCall().args[0].url).toEqual(url+"/projects/owner%2Fproject/merge_request/1/merge")
+      )
+
+      it("should accept a commit message")
+
+      it("should return 405 when the request won't merge")
+    )
   )
 
   describe("MergeRequests", ->

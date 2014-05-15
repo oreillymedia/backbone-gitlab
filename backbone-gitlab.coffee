@@ -219,10 +219,24 @@ GitLab = (url, token) ->
     sync: (method, model, options) ->
       options = options || {}
 
-      if method.toLowerCase() == "create"
+      console.log method, options
+
+      if method.toLowerCase() is "create"
         options.url = "#{root.url}/projects/#{@project.escaped_path()}/merge_requests"
+      else if options.method?.toLowerCase() is "merge"
+        options.method = "PUT"
+        options.url = "#{root.url}/projects/#{@project.escaped_path()}/merge_request/#{@get('id')}/merge"
 
       root.sync.apply(this, arguments)
+
+    merge: (commit_message) ->
+      data = {}
+
+      if commit_message?
+        data.merge_commit_message = commit_message
+
+      @save(data, {method: "merge"})
+
   )
 
   @MergeRequests = @Collection.extend(
