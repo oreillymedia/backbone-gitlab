@@ -185,7 +185,7 @@ GitLab = (url, token) ->
       else
         options.url = "#{root.url}/projects/#{@project.escaped_path()}/repository/branches/#{@get('name')}"
 
-      root.sync(method, model, options);
+      root.sync(method, model, options)
 
     initialize: (data,options={}) ->
       if !@collection?.project? and !options.project then throw "You have to initialize Gitlab.Branch with a Gitlab.Project model"
@@ -219,8 +219,6 @@ GitLab = (url, token) ->
     sync: (method, model, options) ->
       options = options || {}
 
-      console.log method, options
-
       if method.toLowerCase() is "create"
         options.url = "#{root.url}/projects/#{@project.escaped_path()}/merge_requests"
       else if options.method?.toLowerCase() is "merge"
@@ -229,13 +227,15 @@ GitLab = (url, token) ->
 
       root.sync.apply(this, arguments)
 
-    merge: (commit_message) ->
-      data = {}
+    # Public: this function will merge the merge request on Gitlab.
+    merge: (options={}) ->
+      options.method = "merge"
 
-      if commit_message?
-        data.merge_commit_message = commit_message
+      if options.commit_message?
+        data =
+          merge_commit_message: options.commit_message
 
-      @save(data, {method: "merge"})
+      @save(data, options)
 
   )
 
@@ -298,12 +298,12 @@ GitLab = (url, token) ->
 
       if (!(model = this._prepareModel(model, options))) then return false
       if (!options.wait) then this.add(model, options)
-      collection = this;
-      success = options.success;
+      collection = this
+      success = options.success
       options.success = (resp) ->
-        if (options.wait) then collection.add(model, options);
-        if (success) then success(model, resp, options);
-      model.save(null, options);
+        if (options.wait) then collection.add(model, options)
+        if (success) then success(model, resp, options)
+      model.save(null, options)
       return model
   )
 
