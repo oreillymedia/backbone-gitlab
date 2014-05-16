@@ -228,6 +228,10 @@ GitLab = (url, token) ->
       root.sync.apply(this, arguments)
 
     # Public: this function will merge the merge request on Gitlab.
+    #
+    # options: {merge_commit_request: "String, optional", success: (model,xhr), error: (model,xhr)}
+    #
+    # returns nothing
     merge: (options={}) ->
       options.method = "merge"
 
