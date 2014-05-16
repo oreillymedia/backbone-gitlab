@@ -429,7 +429,7 @@ describe("GitLab", ->
     )
   )
 
-  # GitLab.MergeRequests
+  # GitLab.MergeRequest
   # ----------------------------------------------------------------
 
   describe("MergeRequest", ->
@@ -465,8 +465,57 @@ describe("GitLab", ->
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/merge_request/1")
       )
     )
+
+    describe("merge()", ->
+      it("should call the correct url", ->
+        spyOnAjax()
+        merge_request = new gitlab.MergeRequest({id:1}, project:project)
+        merge_request.merge()
+        expect(lastAjaxCall().args[0].type).toEqual("PUT")
+        expect(lastAjaxCall().args[0].url).toEqual(url+"/projects/owner%2Fproject/merge_request/1/merge")
+      )
+
+      it("should accept a commit message", ->
+        spyOnAjax()
+        merge_request = new gitlab.MergeRequest({id: 1}, project:project)
+        merge_request.merge(commit_message:"This looks good, merging in")
+
+        ajax_call =  lastAjaxCall().args[0]
+        expect(ajax_call.type).toEqual("PUT")
+        expect(ajax_call.url).toEqual(url+"/projects/owner%2Fproject/merge_request/1/merge")
+
+        data = JSON.parse ajax_call.data
+        expect(data.merge_commit_message).toEqual("This looks good, merging in")
+      )
+
+      it("should return 405 when the request won't merge", (done) ->
+        spyOnAjax()
+
+        # MergeRequest 2 is designed to throw a 405
+        merge_request = new gitlab.MergeRequest({id: 2}, project:project)
+
+        merge_request.merge
+          error: (model, xhr) ->
+            expect(xhr.status).toEqual(405)
+            done()
+      )
+
+      it("should return 401 when the user is unauthorized to merge", (done) ->
+        spyOnAjax()
+
+        # MergeRequest 3 is designed to throw a 401
+        merge_request = new gitlab.MergeRequest({id: 3}, project:project)
+
+        merge_request.merge
+          error: (model, xhr) ->
+            expect(xhr.status).toEqual(401)
+            done()
+      )
+    )
   )
 
+  # Gitlab.MergeRequests
+  # --------------------------------------------------------------------------
   describe("MergeRequests", ->
     describe("initialize()", ->
       it "should throw an error if no project is passed in options", ->
