@@ -491,7 +491,7 @@
       },
       parse: function(response, options) {
         if (response.encoding === "base64") {
-          response.content = atob(response.content.replace(/\n/g, ''));
+          response.content = Base64.decode(response.content.replace(/\n/g, ''));
           response.encoding = "text";
         }
         return response;
