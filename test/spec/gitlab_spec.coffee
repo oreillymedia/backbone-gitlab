@@ -796,6 +796,22 @@ describe("GitLab", ->
         })
       )
 
+      it("should fetch the blob contents correctly, even if the contents include unicode", (done) ->
+        spyOnAjax()
+        specialBlob = new gitlab.Blob(
+          file_path: "subfolder/special.txt"
+        ,
+          project: project
+        )
+        specialBlob.fetch({success: ->
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fspecial.txt&ref=master")
+          expect(specialBlob.get("content")).toEqual("Oh ’Ello!")
+          expect(specialBlob.get("name")).toEqual("special.txt")
+          expect(specialBlob.get("file_path")).toEqual("subfolder/special.txt")
+          done()
+        })
+      )
+
       it("should use branch if specified", ->
         spyOnAjax()
         slaveBlob.fetch()

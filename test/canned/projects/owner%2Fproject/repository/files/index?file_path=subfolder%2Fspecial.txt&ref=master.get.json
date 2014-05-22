@@ -1,0 +1,10 @@
+{
+  "file_name": "special.txt",
+  "file_path": "subfolder/special.txt",
+  "size": 389,
+  "encoding": "base64",
+  "content": "T2gg4oCZRWxsbyE=\n",
+  "ref": "master",
+  "blob_id": "a13655b69ba37178e0913f990c5613dbcea278ce",
+  "commit_id": "a0a9ec83543a804dc13c4de3ac714c43ee57f0fb"
+}
