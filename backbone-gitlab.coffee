@@ -190,6 +190,27 @@ GitLab = (url, token) ->
     initialize: (data,options={}) ->
       if !@collection?.project? and !options.project then throw "You have to initialize Gitlab.Branch with a Gitlab.Project model"
       @project = if @collection?.project? then @collection.project else options.project
+
+      if @get('branch_name')? and !@get('name')?
+        @set('name', @get('branch_name'))
+
+      @destroy(options)
+
+    destroy: (options={}) ->
+      model = this;
+      success = options.success;
+
+      destroy = () ->
+        model.trigger('destroy', model, model.collection, options)
+
+      options.success = (resp) ->
+        if (options.wait || model.isNew()) then destroy()
+        if (success) then success(model, resp, options)
+        if (!model.isNew()) then model.trigger('sync', model, resp, options)
+
+      xhr = this.sync('delete', this, options);
+      if (!options.wait) then destroy();
+      return xhr;
   )
 
   @Branches = @Collection.extend(
