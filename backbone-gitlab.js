@@ -243,9 +243,8 @@
         }
         this.project = ((_ref1 = this.collection) != null ? _ref1.project : void 0) != null ? this.collection.project : options.project;
         if ((this.get('branch_name') != null) && (this.get('name') == null)) {
-          this.set('name', this.get('branch_name'));
+          return this.set('name', this.get('branch_name'));
         }
-        return this.destroy(options);
       },
       destroy: function(options) {
         var destroy, model, success, xhr;

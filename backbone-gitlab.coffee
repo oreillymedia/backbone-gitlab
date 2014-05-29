@@ -194,8 +194,6 @@ GitLab = (url, token) ->
       if @get('branch_name')? and !@get('name')?
         @set('name', @get('branch_name'))
 
-      @destroy(options)
-
     destroy: (options={}) ->
       model = this;
       success = options.success;
