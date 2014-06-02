@@ -90,6 +90,13 @@
           project: this
         });
       },
+      compare: function(from, to) {
+        return new root.Compare(null, {
+          from: from,
+          to: to,
+          project: this
+        });
+      },
       parse_path: function() {
         var split;
         if (this.get("path_with_namespace")) {

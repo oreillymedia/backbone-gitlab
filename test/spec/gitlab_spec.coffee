@@ -245,6 +245,14 @@ describe("GitLab", ->
         expect(tree.project).toEqual(project)
         expect(tree.branch).toEqual("slave")
       )
+
+      it("returns empty GitLab.Compare model on project.compare(from, to)", ->
+        compare = project.compare("sha1", "sha2")
+        expect(compare.backboneClass).toEqual("Compare")
+        expect(compare.project).toEqual(project)
+        expect(compare.from).toEqual("sha1")
+        expect(compare.to).toEqual("sha2")
+      )
     )
   )
 

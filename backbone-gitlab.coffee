@@ -83,6 +83,14 @@ GitLab = (url, token) ->
         branch: branch
         project:@
       )
+    compare: (from, to) ->
+      return new root.Compare(
+        null
+      ,
+        from: from
+        to: to
+        project:@
+      )
     parse_path: ->
       if @get("path_with_namespace")
         split = @get("path_with_namespace").split("/")
