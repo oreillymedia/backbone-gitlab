@@ -248,7 +248,37 @@
         if ((((_ref = this.collection) != null ? _ref.project : void 0) == null) && !options.project) {
           throw "You have to initialize Gitlab.Branch with a Gitlab.Project model";
         }
-        return this.project = ((_ref1 = this.collection) != null ? _ref1.project : void 0) != null ? this.collection.project : options.project;
+        this.project = ((_ref1 = this.collection) != null ? _ref1.project : void 0) != null ? this.collection.project : options.project;
+        if ((this.get('branch_name') != null) && (this.get('name') == null)) {
+          return this.set('name', this.get('branch_name'));
+        }
+      },
+      destroy: function(options) {
+        var destroy, model, success, xhr;
+        if (options == null) {
+          options = {};
+        }
+        model = this;
+        success = options.success;
+        destroy = function() {
+          return model.trigger('destroy', model, model.collection, options);
+        };
+        options.success = function(resp) {
+          if (options.wait || model.isNew()) {
+            destroy();
+          }
+          if (success) {
+            success(model, resp, options);
+          }
+          if (!model.isNew()) {
+            return model.trigger('sync', model, resp, options);
+          }
+        };
+        xhr = this.sync('delete', this, options);
+        if (!options.wait) {
+          destroy();
+        }
+        return xhr;
       }
     });
     this.Branches = this.Collection.extend({

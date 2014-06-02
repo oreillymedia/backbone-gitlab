@@ -428,11 +428,22 @@ describe("GitLab", ->
     )
 
     describe("create()", ->
-      it("shoudl call the correct URL", ->
+      it("should call the correct URL", ->
         spyOnAjax()
         branches.create({branch_name:"new-branch",ref:"master"})
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches")
+      )
+    )
+
+    describe("destroy()", ->
+      it("should call the correct URL", ->
+        spyOnAjax()
+        branch = new gitlab.Branch({branch_name: "branch-to-delete", ref:"master"},{project:project})
+
+        branch.destroy()
+        expect(lastAjaxCall().args[0].type).toEqual("DELETE")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches/branch-to-delete")
       )
     )
   )
