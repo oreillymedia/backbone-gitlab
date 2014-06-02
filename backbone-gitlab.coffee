@@ -83,6 +83,14 @@ GitLab = (url, token) ->
         branch: branch
         project:@
       )
+    compare: (from, to) ->
+      return new root.Compare(
+        null
+      ,
+        from: from
+        to: to
+        project:@
+      )
     parse_path: ->
       if @get("path_with_namespace")
         split = @get("path_with_namespace").split("/")
@@ -468,6 +476,32 @@ GitLab = (url, token) ->
         full_path.push obj.name
         @project.blob(full_path.join("/"), @branch)
       )
+  )
+
+  # Compare
+  # --------------------------------------------------------
+
+  @Compare = @Model.extend(
+
+    url: -> "#{root.url}/projects/#{@project.escaped_path()}/repository/compare"
+
+    backboneClass: "Compare"
+
+    initialize: (data, options) ->
+      options = options || {}
+      if !options.project then throw "You have to initialize GitLab.Compare with a GitLab.Project model"
+      if !options.to then throw "You have to initialize GitLab.Compare with a to options holding a Git reference"
+      if !options.from then throw "You have to initialize GitLab.Compare with a from options holding a Git reference"
+      @project = options.project
+      @to = options.to
+      @from = options.from
+
+    fetch: (options) ->
+      options = options || {}
+      options.data = options.data || {}
+      options.data.to = @to
+      options.data.from = @from
+      root.Collection.prototype.fetch.apply(this, [options])
   )
 
   # Initialize

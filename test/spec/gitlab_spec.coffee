@@ -245,6 +245,14 @@ describe("GitLab", ->
         expect(tree.project).toEqual(project)
         expect(tree.branch).toEqual("slave")
       )
+
+      it("returns empty GitLab.Compare model on project.compare(from, to)", ->
+        compare = project.compare("sha1", "sha2")
+        expect(compare.backboneClass).toEqual("Compare")
+        expect(compare.project).toEqual(project)
+        expect(compare.from).toEqual("sha1")
+        expect(compare.to).toEqual("sha2")
+      )
     )
   )
 
@@ -975,6 +983,41 @@ describe("GitLab", ->
         masterBlob.fetch success: ->
           expect(masterBlob.get("content")).toEqual("Hello!")
           done()
+      )
+
+    )
+  )
+
+  # Gitlab.Compare
+  # ----------------------------------------------------------------
+
+  describe("Compare", ->
+    
+    describe("initialize", ->
+
+      it("should throw error if no from is passed in options", ->
+        expect(-> new gitlab.Compare(null, {project:project, to:"sha2"})).toThrow("You have to initialize GitLab.Compare with a from options holding a Git reference")
+      )
+
+      it("should throw error if no to is passed in options", ->
+        expect(-> new gitlab.Compare(null, {project:project, from:"sha1"})).toThrow("You have to initialize GitLab.Compare with a to options holding a Git reference")
+      )
+
+      it("should throw error if no project is passed in options", ->
+        expect(-> new gitlab.Compare()).toThrow("You have to initialize GitLab.Compare with a GitLab.Project model")
+      )
+    )
+
+    describe("fetch", ->
+      
+      it("should call the correct URL", ->
+        compare = new gitlab.Compare(null, {project:project, from:"sha1", to:"sha2"})
+        spyOnAjax()
+        compare.fetch()
+        expect(lastAjaxCall().args[0].type).toEqual("GET")
+        expect(lastAjaxCall().args[0].url).toEqual "#{url}/projects/owner%2Fproject/repository/compare"
+        expect(lastAjaxCallData().from).toEqual("sha1")
+        expect(lastAjaxCallData().to).toEqual("sha2")
       )
 
     )
