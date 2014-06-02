@@ -90,6 +90,13 @@
           project: this
         });
       },
+      compare: function(from, to) {
+        return new root.Compare(null, {
+          from: from,
+          to: to,
+          project: this
+        });
+      },
       parse_path: function() {
         var split;
         if (this.get("path_with_namespace")) {
@@ -549,6 +556,34 @@
           full_path.push(obj.name);
           return _this.project.blob(full_path.join("/"), _this.branch);
         });
+      }
+    });
+    this.Compare = this.Model.extend({
+      url: function() {
+        return "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository/compare";
+      },
+      backboneClass: "Compare",
+      initialize: function(data, options) {
+        options = options || {};
+        if (!options.project) {
+          throw "You have to initialize GitLab.Compare with a GitLab.Project model";
+        }
+        if (!options.to) {
+          throw "You have to initialize GitLab.Compare with a to options holding a Git reference";
+        }
+        if (!options.from) {
+          throw "You have to initialize GitLab.Compare with a from options holding a Git reference";
+        }
+        this.project = options.project;
+        this.to = options.to;
+        return this.from = options.from;
+      },
+      fetch: function(options) {
+        options = options || {};
+        options.data = options.data || {};
+        options.data.to = this.to;
+        options.data.from = this.from;
+        return root.Collection.prototype.fetch.apply(this, [options]);
       }
     });
     this.user = new this.User();
