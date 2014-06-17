@@ -442,6 +442,11 @@
     });
     this.Group = this.Model.extend({
       backboneClass: "Group",
+      url: function() {
+        if (this.id) {
+          return "" + root.url + "/groups/" + this.id;
+        }
+      },
       initialize: function() {
         return this.members = new root.Members([], {
           group: this

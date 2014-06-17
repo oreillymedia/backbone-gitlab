@@ -343,6 +343,7 @@ GitLab = (url, token) ->
 
   @Group = @Model.extend(
     backboneClass: "Group"
+    url: -> "#{root.url}/groups/#{@id}" if @id
     initialize: ->
       @members = new root.Members([],{group:@})
   )
