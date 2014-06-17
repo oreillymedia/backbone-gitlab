@@ -653,6 +653,21 @@ describe("GitLab", ->
     )
   )
 
+  # GitLab.Group
+  # ----------------------------------------------------------------
+  
+  describe "Group", ->
+    describe "fetch()", ->
+      it "should get a single group, and be able to get the projects of the group", (done)->
+        group = new gitlab.Group(id: 4)
+        group.fetch
+          success: ->
+            expect(group.get("projects").length).toEqual(17)
+            expect(group.get("projects")[0].name).toEqual("animal_theme")
+            done()
+          error: (err) ->
+            throw new Error("ID Not Found")
+
   # GitLab.Groups
   # ----------------------------------------------------------------
 
