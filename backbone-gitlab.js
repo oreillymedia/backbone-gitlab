@@ -532,9 +532,11 @@
         }
       },
       parse: function(response, options) {
-        if (response.encoding === "base64") {
-          response.content = Base64.decode(response.content.replace(/\n/g, ''));
-          response.encoding = "text";
+        if (options.parse !== false) {
+          if (response.encoding === "base64") {
+            response.content = Base64.decode(response.content.replace(/\n/g, ''));
+            response.encoding = "text";
+          }
         }
         return response;
       }

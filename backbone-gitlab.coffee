@@ -423,9 +423,10 @@ GitLab = (url, token) ->
         "Updated #{@get("file_path")}"
 
     parse: (response, options) ->
-      if response.encoding is "base64"
-        response.content = Base64.decode(response.content.replace(/\n/g,''))
-        response.encoding = "text"
+      if options.parse isnt false
+        if response.encoding is "base64"
+          response.content = Base64.decode(response.content.replace(/\n/g,''))
+          response.encoding = "text"
       response
   )
 
