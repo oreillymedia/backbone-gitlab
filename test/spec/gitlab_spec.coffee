@@ -655,7 +655,7 @@ describe("GitLab", ->
 
   # GitLab.Group
   # ----------------------------------------------------------------
-  
+
   describe "Group", ->
     describe "fetch()", ->
       it "should get a single group, and be able to get the projects of the group", (done)->
@@ -845,6 +845,24 @@ describe("GitLab", ->
           done()
         })
       )
+      # ZACH WORK ON THIS HERE
+      # Simulates an image
+      it("should fetch the blob contents correctly, and not parse/decode the contents if parse is false", (done) ->
+        spyOnAjax()
+        specialBlob = new gitlab.Blob(
+          file_path: "subfolder/special.txt"
+        ,
+          project: project
+        )
+        specialBlob.fetch({parse: false, success: ->
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fspecial.txt&ref=master")
+          expect(specialBlob.get("content")).toEqual("T2gg4oCZRWxsbyE=\n")
+          expect(specialBlob.get("name")).toEqual("special.txt")
+          expect(specialBlob.get("encoding")).toEqual("base64")
+          expect(specialBlob.get("file_path")).toEqual("subfolder/special.txt")
+          done()
+        })
+      )
 
       it("should use branch if specified", ->
         spyOnAjax()
@@ -1007,7 +1025,7 @@ describe("GitLab", ->
   # ----------------------------------------------------------------
 
   describe("Compare", ->
-    
+
     describe("initialize", ->
 
       it("should throw error if no from is passed in options", ->
@@ -1024,7 +1042,7 @@ describe("GitLab", ->
     )
 
     describe("fetch", ->
-      
+
       it("should call the correct URL", ->
         compare = new gitlab.Compare(null, {project:project, from:"sha1", to:"sha2"})
         spyOnAjax()
