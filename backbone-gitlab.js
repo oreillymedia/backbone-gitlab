@@ -115,6 +115,14 @@
       model: root.Project,
       url: function() {
         return "" + root.url + "/projects";
+      },
+      search: function(term, options) {
+        if (term) {
+          options = _.extend(options, {
+            url: "" + root.url + "/projects/search/" + term
+          });
+        }
+        return this.fetch(options);
       }
     });
     this.Events = this.Collection.extend({
@@ -249,8 +257,8 @@
           throw "You have to initialize Gitlab.Branch with a Gitlab.Project model";
         }
         this.project = ((_ref1 = this.collection) != null ? _ref1.project : void 0) != null ? this.collection.project : options.project;
-        if ((this.get('branch_name') != null) && (this.get('name') == null)) {
-          return this.set('name', this.get('branch_name'));
+        if ((this.get('branch') != null) && (this.get('name') == null)) {
+          return this.set('name', this.get('branch'));
         }
       },
       destroy: function(options) {
@@ -489,13 +497,13 @@
         options = options || {};
         baseURL = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository";
         if (method.toLowerCase() === "read") {
-          options.url = "" + baseURL + "/files?file_path=" + (this.get('file_path').replace('/', '%2F')) + "&ref=" + this.branch;
+          options.url = "" + baseURL + "/files/" + (this.get('file_path').replace('/', '%2F')) + "?ref=" + this.branch;
         } else {
-          options.url = "" + baseURL + "/files";
+          options.url = "" + baseURL + "/files/" + (this.get('file_path').replace('/', '%2F')) + "?branch=" + this.branch;
         }
         if (method.toLowerCase() === "delete") {
           commit_message = this.get('commit_message') || ("Deleted " + (this.get('file_path')));
-          options.url = options.url + ("?file_path=" + (this.get('file_path')) + "&branch_name=" + this.branch + "&commit_message='" + commit_message + "'");
+          options.url = options.url + ("&commit_message='" + commit_message + "'");
         }
         return root.sync.apply(this, arguments);
       },
@@ -507,11 +515,13 @@
         defaults = {
           name: this.get("name"),
           file_path: this.get("file_path"),
-          branch_name: this.branch,
+          branch: this.branch,
           content: this.get("content"),
-          commit_message: this.get("commit_message") || this.defaultCommitMessage(),
-          encoding: this.get("encoding") || 'text'
+          commit_message: this.get("commit_message") || this.defaultCommitMessage()
         };
+        if (this.get("encoding") && this.get("encoding") !== "text") {
+          defaults.encoding = this.get("encoding");
+        }
         if (typeof opts === "Array" && opts.length === 0) {
           return defaults;
         }

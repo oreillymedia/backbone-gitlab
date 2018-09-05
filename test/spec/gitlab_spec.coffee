@@ -430,7 +430,7 @@ describe("GitLab", ->
     describe("create()", ->
       it("should call the correct URL", ->
         spyOnAjax()
-        branches.create({branch_name:"new-branch",ref:"master"})
+        branches.create({branch:"new-branch",ref:"master"})
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/branches")
       )
@@ -439,7 +439,7 @@ describe("GitLab", ->
     describe("destroy()", ->
       it("should call the correct URL", ->
         spyOnAjax()
-        branch = new gitlab.Branch({branch_name: "branch-to-delete", ref:"master"},{project:project})
+        branch = new gitlab.Branch({branch: "branch-to-delete", ref:"master"},{project:project})
 
         branch.destroy()
         expect(lastAjaxCall().args[0].type).toEqual("DELETE")
@@ -822,7 +822,7 @@ describe("GitLab", ->
       it("should fetch the blob contents and merge with other data", (done) ->
         spyOnAjax()
         masterBlob.fetch({success: ->
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fmaster.txt&ref=master")
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fmaster.txt?ref=master")
           expect(masterBlob.get("content")).toEqual("Hello!")
           expect(masterBlob.get("name")).toEqual("master.txt")
           expect(masterBlob.get("file_path")).toEqual("subfolder/master.txt")
@@ -838,7 +838,7 @@ describe("GitLab", ->
           project: project
         )
         specialBlob.fetch({success: ->
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fspecial.txt&ref=master")
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fspecial.txt?ref=master")
           expect(specialBlob.get("content")).toEqual("Oh ’Ello!")
           expect(specialBlob.get("name")).toEqual("special.txt")
           expect(specialBlob.get("file_path")).toEqual("subfolder/special.txt")
@@ -855,7 +855,7 @@ describe("GitLab", ->
           project: project
         )
         specialBlob.fetch({parse: false, success: ->
-          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fspecial.txt&ref=master")
+          expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fspecial.txt?ref=master")
           expect(specialBlob.get("content")).toEqual("T2gg4oCZRWxsbyE=\n")
           expect(specialBlob.get("name")).toEqual("special.txt")
           expect(specialBlob.get("encoding")).toEqual("base64")
@@ -867,7 +867,7 @@ describe("GitLab", ->
       it("should use branch if specified", ->
         spyOnAjax()
         slaveBlob.fetch()
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files?file_path=subfolder%2Fslave.txt&ref=slave")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fslave.txt?ref=slave")
       )
     )
 
@@ -889,12 +889,12 @@ describe("GitLab", ->
         spyOnAjax()
         masterBlob.set("content", "New Content")
         masterBlob.save()
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fmaster.txt?branch=master")
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCallData().file_path).toEqual("subfolder/master.txt")
         expect(lastAjaxCallData().content).toEqual("New Content")
         expect(lastAjaxCallData().commit_message).toEqual("Created subfolder/master.txt")
-        expect(lastAjaxCallData().branch_name).toEqual("master")
+        expect(lastAjaxCallData().branch).toEqual("master")
       )
 
       it("should make PUT if not isNew", (done) ->
@@ -905,13 +905,13 @@ describe("GitLab", ->
           masterBlob.set("content", "Updated Content")
 
           masterBlob.save(masterBlob.attributes, success: (updatedBlob) ->
-            expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+            expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fmaster.txt?branch=master")
             expect(lastAjaxCall().args[0].type).toEqual("PUT")
             expect(lastAjaxCallData().file_path).toEqual("subfolder/master.txt")
             expect(lastAjaxCallData().content).toEqual("Updated Content")
             expect(lastAjaxCallData().commit_message).toEqual("Updated subfolder/master.txt")
-            expect(lastAjaxCallData().branch_name).toEqual("master")
-            expect(lastAjaxCallData().encoding).toEqual("text")
+            expect(lastAjaxCallData().branch).toEqual("master")
+            expect(lastAjaxCallData().encoding).toBeUndefined()
 
             done()
           )
@@ -925,7 +925,7 @@ describe("GitLab", ->
         masterBlob.set("content", "iVBORw0KGgo")
         masterBlob.set("encoding", "base64")
         masterBlob.save()
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fmaster.txt?branch=master")
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCallData().content).toEqual("iVBORw0KGgo")
         expect(lastAjaxCallData().encoding).toEqual("base64")
@@ -937,12 +937,12 @@ describe("GitLab", ->
         slaveBlob.save(
           commit_message: "BLABLA"
         )
-        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].url).toEqual(url + "/projects/owner%2Fproject/repository/files/subfolder%2Fslave.txt?branch=slave")
         expect(lastAjaxCall().args[0].type).toEqual("POST")
         expect(lastAjaxCallData().file_path).toEqual("subfolder/slave.txt")
         expect(lastAjaxCallData().content).toEqual("New Content")
         expect(lastAjaxCallData().commit_message).toEqual("BLABLA")
-        expect(lastAjaxCallData().branch_name).toEqual("slave")
+        expect(lastAjaxCallData().branch).toEqual("slave")
       )
     )
 
@@ -958,13 +958,13 @@ describe("GitLab", ->
 
       it "should call the correct URL", ->
         masterBlob.destroy()
-        expect(lastAjaxCall().args[0].url).toEqual("#{url}/projects/owner%2Fproject/repository/files")
+        expect(lastAjaxCall().args[0].url).toEqual("#{url}/projects/owner%2Fproject/repository/files/subfolder%2Fmaster.txt?branch=master")
 
-      it "should call the request with `file_path`, `branch_name` and `commit_message` as parameters", ->
+      it "should call the request with `file_path`, `branch` and `commit_message` as parameters", ->
         masterBlob.destroy()
         parameters = JSON.parse lastAjaxCall().args[0].data
         expect(parameters["file_path"]).toBeDefined()
-        expect(parameters["branch_name"]).toBeDefined()
+        expect(parameters["branch"]).toBeDefined()
         expect(parameters["commit_message"]).toBeDefined()
 
       it "should call the `file_path` parameter with the proper value", ->
@@ -986,9 +986,9 @@ describe("GitLab", ->
         json = masterBlob.toJSON()
         expect(json.file_path).toEqual('subfolder/master.txt')
         expect(json.name).toEqual('master.txt')
-        expect(json.branch_name).toEqual('master')
+        expect(json.branch).toEqual('master')
         expect(json.content).toEqual('Some file content')
-        expect(json.encoding).toEqual('text')
+        expect(json.encoding).toBeUndefined()
         expect(json.commit_message).toEqual('Created subfolder/master.txt')
 
       it "should return attributes of Blob as specified by arguments", ->

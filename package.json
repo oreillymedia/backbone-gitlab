@@ -1,20 +1,20 @@
 {
-  "name" : "backbone-gitlab",
-  "version" : "0.9.1",
+  "name": "backbone-gitlab",
+  "version": "0.9.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/oreillymedia/backbone-gitlab"
   },
-  "devDependencies" : {
-    "underscore":"",
-    "backbone":"",
+  "devDependencies": {
+    "underscore": "",
+    "backbone": "",
     "coffee-script": "1.6.3",
-    "canned" : "git://github.com/oreillymedia/canned.git"
+    "canned": "git://github.com/oreillymedia/canned.git"
   },
   "scripts": {
     "build-js": "coffee -c .",
     "watch-js": "coffee -w -c .",
     "test": "open ./test/index.html; node_modules/.bin/canned -p 4321 --headers \"PRIVATE-TOKEN, Content-Type\" ./test/canned; ",
-    "start":"npm run watch-js & npm run test"
+    "start": "npm run watch-js & npm run test"
   }
 }
