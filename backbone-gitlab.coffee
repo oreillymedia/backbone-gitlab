@@ -102,10 +102,10 @@ GitLab = (url, token) ->
 
   @Projects = @Collection.extend(
     model: root.Project
-    url: -> "#{root.url}/projects"
+    url: -> "#{root.url}/projects?membership=true"
     search: (term, options) ->
       if term
-        options = _.extend(options, {url: "#{root.url}/projects/search/#{term}"})
+        options = _.extend(options, {url: "#{root.url}/projects?membership=true&search=#{term}"})
 
       this.fetch options
   )
