@@ -97,7 +97,7 @@ GitLab = (url, token) ->
         @set("path", _.last(split))
         @set("owner", { username: _.first(split) })
     escaped_path: ->
-      return @get("path_with_namespace").replace("/", "%2F")
+      return @get("path_with_namespace").replace(/\//g, "%2F")
   )
 
   @Projects = @Collection.extend(
@@ -387,9 +387,9 @@ GitLab = (url, token) ->
       options = options || {}
       baseURL = "#{root.url}/projects/#{@project.escaped_path()}/repository"
       if method.toLowerCase() == "read"
-        options.url = "#{baseURL}/files/#{@get('file_path').replace('/','%2F')}?ref=#{@branch}"
+        options.url = "#{baseURL}/files/#{@get('file_path').replace(/\//g,'%2F')}?ref=#{@branch}"
       else
-        options.url = "#{baseURL}/files/#{@get('file_path').replace('/','%2F')}?branch=#{@branch}"
+        options.url = "#{baseURL}/files/#{@get('file_path').replace(/\//g,'%2F')}?branch=#{@branch}"
 
       # Gitlab Delete requires parameters with DELETE which is not expected
       # behavoir with Backbone.
