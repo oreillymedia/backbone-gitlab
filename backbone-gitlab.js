@@ -114,7 +114,18 @@
     this.Projects = this.Collection.extend({
       model: root.Project,
       url: function() {
-        return "" + root.url + "/projects";
+        if (this.scope != null) {
+          return "" + root.url + "/groups/" + this.scope + "/projects";
+        } else {
+          return "" + root.url + "/projects";
+        }
+      },
+      group: function(group) {
+        if (group) {
+          return this.scope = group;
+        } else {
+          return this.scope = void 0;
+        }
       }
     });
     this.Events = this.Collection.extend({
