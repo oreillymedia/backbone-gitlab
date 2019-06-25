@@ -102,12 +102,16 @@ GitLab = (url, token) ->
 
   @Projects = @Collection.extend(
     model: root.Project
-    url: -> "#{root.url}/projects?membership=true"
-    search: (term, options) ->
-      if term
-        options = _.extend(options, {url: "#{root.url}/projects?membership=true&search=#{term}"})
-
-      this.fetch options
+    url: ->
+      if @scope?
+        return "#{root.url}/groups/#{@scope}/projects"
+      else
+        return "#{root.url}/projects"
+    group: (group) ->
+        if group
+          @scope = group
+        else
+          @scope = undefined
   )
 
   # Events
