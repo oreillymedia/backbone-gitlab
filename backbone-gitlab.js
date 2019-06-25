@@ -108,12 +108,15 @@
         }
       },
       escaped_path: function() {
-        return this.get("path_with_namespace").replace("/", "%2F");
+        return this.get("path_with_namespace").replace(/\//g, "%2F");
       }
     });
     this.Projects = this.Collection.extend({
       model: root.Project,
       url: function() {
+        if (this.username != null) {
+          return "" + root.url + "/users/" + this.username + "/projects";
+        }
         if (this.scope != null) {
           return "" + root.url + "/groups/" + this.scope + "/projects";
         } else {
@@ -122,9 +125,18 @@
       },
       group: function(group) {
         if (group) {
-          return this.scope = group;
+          this.scope = group;
+          return this.username = void 0;
         } else {
           return this.scope = void 0;
+        }
+      },
+      user: function(user) {
+        if (user) {
+          this.username = user;
+          return this.scope = void 0;
+        } else {
+          return this.user = void 0;
         }
       }
     });
@@ -500,9 +512,9 @@
         options = options || {};
         baseURL = "" + root.url + "/projects/" + (this.project.escaped_path()) + "/repository";
         if (method.toLowerCase() === "read") {
-          options.url = "" + baseURL + "/files/" + (this.get('file_path').replace('/', '%2F')) + "?ref=" + this.branch;
+          options.url = "" + baseURL + "/files/" + (this.get('file_path').replace(/\//g, '%2F')) + "?ref=" + this.branch;
         } else {
-          options.url = "" + baseURL + "/files/" + (this.get('file_path').replace('/', '%2F')) + "?branch=" + this.branch;
+          options.url = "" + baseURL + "/files/" + (this.get('file_path').replace(/\//g, '%2F')) + "?branch=" + this.branch;
         }
         if (method.toLowerCase() === "delete") {
           commit_message = this.get('commit_message') || ("Deleted " + (this.get('file_path')));

@@ -103,6 +103,8 @@ GitLab = (url, token) ->
   @Projects = @Collection.extend(
     model: root.Project
     url: ->
+      if @username?
+        return "#{root.url}/users/#{@username}/projects"
       if @scope?
         return "#{root.url}/groups/#{@scope}/projects"
       else
@@ -110,8 +112,15 @@ GitLab = (url, token) ->
     group: (group) ->
         if group
           @scope = group
+          @username = undefined
         else
           @scope = undefined
+    user: (user) ->
+        if user
+          @username = user
+          @scope = undefined
+        else
+          @user = undefined
   )
 
   # Events
