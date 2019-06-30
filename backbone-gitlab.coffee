@@ -97,12 +97,14 @@ GitLab = (url, token) ->
         @set("path", _.last(split))
         @set("owner", { username: _.first(split) })
     escaped_path: ->
-      return @get("path_with_namespace").replace("/", "%2F")
+      return @get("path_with_namespace").replace(/\//g, "%2F")
   )
 
   @Projects = @Collection.extend(
     model: root.Project
     url: ->
+      if @username?
+        return "#{root.url}/users/#{@username}/projects"
       if @scope?
         return "#{root.url}/groups/#{@scope}/projects"
       else
@@ -110,8 +112,15 @@ GitLab = (url, token) ->
     group: (group) ->
         if group
           @scope = group
+          @username = undefined
         else
           @scope = undefined
+    user: (user) ->
+        if user
+          @username = user
+          @scope = undefined
+        else
+          @user = undefined
   )
 
   # Events
@@ -208,8 +217,8 @@ GitLab = (url, token) ->
       if !@collection?.project? and !options.project then throw "You have to initialize Gitlab.Branch with a Gitlab.Project model"
       @project = if @collection?.project? then @collection.project else options.project
 
-      if @get('branch_name')? and !@get('name')?
-        @set('name', @get('branch_name'))
+      if @get('branch')? and !@get('name')?
+        @set('name', @get('branch'))
 
     destroy: (options={}) ->
       model = this;
@@ -391,15 +400,15 @@ GitLab = (url, token) ->
       options = options || {}
       baseURL = "#{root.url}/projects/#{@project.escaped_path()}/repository"
       if method.toLowerCase() == "read"
-        options.url = "#{baseURL}/files?file_path=#{@get('file_path').replace('/','%2F')}&ref=#{@branch}"
+        options.url = "#{baseURL}/files/#{@get('file_path').replace(/\//g,'%2F')}?ref=#{@branch}"
       else
-        options.url = "#{baseURL}/files"
+        options.url = "#{baseURL}/files/#{@get('file_path').replace(/\//g,'%2F')}?branch=#{@branch}"
 
       # Gitlab Delete requires parameters with DELETE which is not expected
       # behavoir with Backbone.
       if method.toLowerCase() is "delete"
         commit_message = @get('commit_message') || "Deleted #{@get('file_path')}"
-        options.url = options.url + "?file_path=#{@get('file_path')}&branch_name=#{@branch}&commit_message='#{commit_message}'"
+        options.url = options.url + "&commit_message='#{commit_message}'"
 
       root.sync.apply(this, arguments)
 
@@ -407,11 +416,13 @@ GitLab = (url, token) ->
       defaults = {
         name: @get("name")
         file_path: @get("file_path")
-        branch_name: @branch
+        branch: @branch
         content: @get("content")
         commit_message: @get("commit_message") || @defaultCommitMessage()
-        encoding: @get("encoding") || 'text'
       }
+
+      if @get("encoding") and @get("encoding") != "text"
+        defaults.encoding = @get("encoding")
 
       # exit early if not provided with opts
       if typeof opts is "Array" and opts.length is 0 then return defaults
