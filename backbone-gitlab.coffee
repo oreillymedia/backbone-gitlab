@@ -465,6 +465,7 @@ GitLab = (url, token) ->
       @project = options.project
       @branch = options.branch || "master"
       @trees = []
+      @per_page = options.per_page || 100
 
       if options.path
         @path = options.path
@@ -475,6 +476,7 @@ GitLab = (url, token) ->
       options.data = options.data || {}
       options.data.path = @path if @path
       options.data.ref_name = @branch
+      options.data.per_page = @per_page
       root.Collection.prototype.fetch.apply(this, [options])
 
     parse: (resp, xhr) ->

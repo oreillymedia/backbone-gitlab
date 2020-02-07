@@ -580,6 +580,7 @@
         this.project = options.project;
         this.branch = options.branch || "master";
         this.trees = [];
+        this.per_page = options.per_page || 100;
         if (options.path) {
           this.path = options.path;
           return this.name = _.last(options.path.split("/"));
@@ -592,6 +593,7 @@
           options.data.path = this.path;
         }
         options.data.ref_name = this.branch;
+        options.data.per_page = this.per_page;
         return root.Collection.prototype.fetch.apply(this, [options]);
       },
       parse: function(resp, xhr) {
