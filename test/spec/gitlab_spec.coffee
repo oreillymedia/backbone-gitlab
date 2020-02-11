@@ -736,6 +736,29 @@ describe("GitLab", ->
         expect(lastAjaxCallData().ref_name).toEqual("slave")
       )
 
+      it("should override per_page default with maximum allowed value when not supplied", ->
+        spyOnAjax()
+        tree = new gitlab.Tree([]
+        ,
+          project:project
+          path:"subfolder"
+        )
+        tree.fetch()
+        expect(lastAjaxCallData().per_page).toEqual(100)
+      )
+
+      it("should call correct URL with supplied per_page parameter", ->
+        spyOnAjax()
+        tree = new gitlab.Tree([]
+        ,
+          project:project
+          path:"subfolder"
+          per_page: 60
+        )
+        tree.fetch()
+        expect(lastAjaxCallData().per_page).toEqual(60)
+      )
+
       it("should parse trees and blobs", (done) ->
         tree = new gitlab.Tree([], project:project)
         tree.fetch({
