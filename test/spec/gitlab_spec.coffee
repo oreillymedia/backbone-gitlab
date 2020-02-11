@@ -736,7 +736,7 @@ describe("GitLab", ->
         expect(lastAjaxCallData().ref_name).toEqual("slave")
       )
 
-      it("should call correct URL with default per_page parameter of 100", ->
+      it("should override per_page default with maximum allowed value when not supplied", ->
         spyOnAjax()
         tree = new gitlab.Tree([]
         ,
