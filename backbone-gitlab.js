@@ -592,7 +592,7 @@
         if (this.path) {
           options.data.path = this.path;
         }
-        options.data.ref_name = this.branch;
+        options.data.ref = this.branch;
         options.data.per_page = this.per_page;
         return root.Collection.prototype.fetch.apply(this, [options]);
       },

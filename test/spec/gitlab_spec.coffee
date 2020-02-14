@@ -733,7 +733,7 @@ describe("GitLab", ->
         )
         tree.fetch()
         expect(lastAjaxCallData().path).toEqual("subfolder")
-        expect(lastAjaxCallData().ref_name).toEqual("slave")
+        expect(lastAjaxCallData().ref).toEqual("slave")
       )
 
       it("should override per_page default with maximum allowed value when not supplied", ->
