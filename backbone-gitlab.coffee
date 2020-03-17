@@ -475,7 +475,7 @@ GitLab = (url, token) ->
       options = options || {}
       options.data = options.data || {}
       options.data.path = @path if @path
-      options.data.ref_name = @branch
+      options.data.ref = @branch
       options.data.per_page = @per_page
       root.Collection.prototype.fetch.apply(this, [options])
 
